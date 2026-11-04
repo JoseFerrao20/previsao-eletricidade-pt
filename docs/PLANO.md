@@ -44,8 +44,16 @@ Python, TypeScript e MATLAB):
    acentos, minúsculas) e falha se uma série-alvo for ambígua ou inexistente.
 2. Comportamento nos dias de mudança de hora (92/100 intervalos ou rótulos
    repetidos) → testado e convertido para UTC.
-3. Profundidade do histórico disponível → o download começa em 2022-01-01 (o
-   arquivo de previsões do Open-Meteo começa em 2022).
+3. Profundidade do histórico disponível → o download começa em 2024-01-01
+   (cobertura do arquivo *Previous Runs* do Open-Meteo).
+
+### Meteorologia: porquê a API *Previous Runs*
+
+O arquivo `historical-forecast-api` junta sobretudo as primeiras horas de cada
+corrida (previsões a muito curto prazo), o que tornaria o backtest otimista
+para horizontes de 24 a 48 h. A API `previous-runs-api.open-meteo.com` expõe
+`<variável>_previous_dayN`, a previsão feita N dias antes (uso confirmado em
+código público). Regra: D usa `previous_day2` e D+1 usa `previous_day3`.
 
 ## Stack proposta
 
@@ -84,5 +92,4 @@ Python, TypeScript e MATLAB):
 
 Para correr a ingestão neste ambiente de desenvolvimento, autorizar em
 *Network access* os domínios:
-`servicebus.ren.pt`, `datahub.ren.pt`, `api.open-meteo.com`,
-`historical-forecast-api.open-meteo.com`.
+`servicebus.ren.pt` e `previous-runs-api.open-meteo.com`.

@@ -1,0 +1,98 @@
+name: diario
+
+# Ingestão incremental, previsão a 48 h, monitor (alertas + pedido de retreino) e painel.
+# 01:10 UTC = 01:10 (inverno) ou 02:10 (verão) em Lisboa: o dia anterior já está fechado.
+on:
+  schedule:
+    - cron: "10 1 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: estado
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+  pages: write
+  id-token: write
+
+jobs:
+  diario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    outputs:
+      alerta: ${{ steps.monitor.outputs.alerta }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+
+      - name: Dados brutos (cache)
+        uses: actions/cache@v4
+        with:
+          path: dados
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - name: Estado de produção
+        run: scripts/estado.sh abrir
+
+      - name: Ingestão incremental (REN + Open-Meteo)
+        run: uv run eletricidade ingest
+
+      - name: Primeiro treino (só se não houver campeão)
+        run: |
+          if [ ! -f estado/registo/campeoes.json ]; then
+            uv run eletricidade backtest --semanas 26
+            cp artefactos/backtest_*.csv estado/
+            uv run eletricidade treinar
+          fi
+
+      - name: Previsão a 48 h
+        run: uv run eletricidade prever
+
+      - name: Monitor
+        id: monitor
+        run: uv run eletricidade monitorizar
+
+      - name: Guardar estado
+        run: scripts/estado.sh guardar "Previsão e monitor de $(date -u +%F)"
+
+      - name: Alerta (issue)
+        if: steps.monitor.outputs.alerta == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create alerta-modelo --color B60205 --description "Alerta automático do monitor" --force
+          aberta=$(gh issue list --label alerta-modelo --state open --json number --jq '.[0].number')
+          if [ -n "$aberta" ]; then
+            gh issue comment "$aberta" --body-file estado/monitor/relatorio.md
+          else
+            gh issue create --title "Alerta do monitor: degradação ou drift" --label alerta-modelo \
+              --body-file estado/monitor/relatorio.md
+          fi
+
+      - name: Pedir retreino
+        if: steps.monitor.outputs.alerta == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run retreino.yml -f motivo="alerta do monitor"
+
+      - name: Painel
+        run: uv run eletricidade painel
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publicar:
+    needs: diario
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

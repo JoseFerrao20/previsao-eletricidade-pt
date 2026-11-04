@@ -1,0 +1,63 @@
+name: retreino
+
+# Semanal, ou disparado pelo monitor. Backtest completo (tabela do README) e
+# candidato novo, promovido só se passar a regra campeão/candidato.
+on:
+  schedule:
+    - cron: "37 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      motivo:
+        description: Motivo do retreino
+        default: manual
+
+concurrency:
+  group: estado
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  retreino:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+
+      - uses: actions/cache@v4
+        with:
+          path: dados
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - run: scripts/estado.sh abrir
+      - run: uv run eletricidade ingest
+
+      - name: Backtest semana a semana (26 semanas)
+        run: |
+          uv run eletricidade backtest --semanas 26 --atualizar-readme
+          cp artefactos/backtest_*.csv artefactos/resultados.md estado/
+
+      - name: Treino e promoção
+        run: uv run eletricidade treinar
+
+      - name: Guardar estado
+        env:
+          MOTIVO: ${{ inputs.motivo || 'semanal' }}
+        run: scripts/estado.sh guardar "Retreino ($(date -u +%F)) - motivo - $MOTIVO"
+
+      - name: Atualizar tabela do README
+        run: |
+          if ! git diff --quiet README.md; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Atualiza resultados do backtest no README" README.md
+            git pull -q --rebase origin main && git push -q origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtest
+          path: artefactos/
