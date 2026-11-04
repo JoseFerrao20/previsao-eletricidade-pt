@@ -9,8 +9,9 @@ O objetivo não é só treinar um modelo: é medir, com honestidade, **se ele ba
 modelos simples**, e mantê-lo vivo em produção (treino agendado, registo de
 modelos, vigilância de drift e da degradação do erro, retreino automático).
 
-> **Estado:** em construção. Os resultados só aparecem no README depois de
-> correrem sobre dados reais da REN. Não há números inventados neste repositório.
+> **Painel ao vivo:** <https://joseferrao20.github.io/previsao-eletricidade-pt/>
+> (atualizado todos os dias). Todos os números deste README vêm de dados reais
+> da REN, processados pelos workflows; nenhum foi escrito à mão.
 
 ---
 
@@ -99,13 +100,16 @@ flowchart LR
   (D vs. D+1). No solar, o MAPE e o sMAPE são calculados só nas horas com
   produção acima de 100 MW: perto de zero, ambos explodem (no sMAPE, cada hora
   noturna com 1 MW previsto vale 200 %). A tabela indica-o.
-- **Skill** face ao melhor modelo simples: `1 - MAE_modelo / MAE_referência`.
+- **Skill** face ao naive sazonal: `1 - MAE_modelo / MAE_naive_sazonal`. Como o
+  naive nem sempre é a referência mais forte, a leitura abaixo compara também
+  com o melhor modelo simples de cada alvo.
 
 ### Resultados
 
 A tabela entre os marcadores é escrita por
-`eletricidade backtest --atualizar-readme` (workflow `retrain`). Só será
-preenchida com dados reais.
+`eletricidade backtest --atualizar-readme` (workflow `retreino`, todos os
+domingos), por isso pode ter números mais recentes do que a análise que se lhe
+segue.
 
 <!-- RESULTADOS:INICIO -->
 Backtest semana a semana: 26 semanas de teste, de 2026-05-04 a 2026-11-01; horizontes D e D+1 agregados. MAPE e sMAPE do solar só nas horas com mais de 100 MW.
@@ -125,6 +129,30 @@ Backtest semana a semana: 26 semanas de teste, de 2026-05-04 a 2026-11-01; horiz
 | solar | Média da semana anterior | 185 | 21.9% | 19.2% | +17.1% |
 | solar | Persistência (D-1) | 193 | 21.8% | 20.2% | +13.2% |
 <!-- RESULTADOS:FIM -->
+
+**Leitura** (primeiro backtest real: 26 semanas, de maio a novembro de 2026,
+4368 horas por alvo e horizonte):
+
+| Alvo | MAE LightGBM, D / D+1 | Melhor modelo simples (MAE) | Skill vs. melhor simples |
+|------|----------------------:|-----------------------------|-------------------------:|
+| consumo | 174 / 204 MW | naive sazonal (295) | +36 % |
+| eolica | 400 / 440 MW | média da semana anterior (636) | +34 % |
+| solar | 142 / 156 MW | média da semana anterior (185) | +19 % |
+
+- **Consumo:** o MAPE de 3,2 % é o resultado mais sólido. O naive sazonal
+  já capta bem o padrão semanal; o modelo ganha nos feriados, nas pontes e nos
+  dias quentes. A persistência (D-1) é pior do que o naive porque ignora o
+  fim de semana.
+- **Eólica:** é onde o modelo mais ganha, porque o vento previsto é
+  informação que nenhum modelo simples tem. O MAPE (80 %+) é enganador: há
+  muitas horas com pouca produção, onde o erro relativo explode. Para a eólica,
+  o MAE é a métrica que conta.
+- **Solar:** o ganho é o mais pequeno. Num dia de céu limpo, o dia anterior já
+  é uma boa previsão, e a radiação prevista só ajuda nos dias de nuvens. O
+  período de teste (maio a novembro) é sobretudo de céu limpo; o inverno
+  deve ser mais difícil.
+- De D para D+1 o erro sobe 8 a 17 %, em linha com a meteorologia mais
+  antiga (previsão de 3 dias antes em vez de 2).
 
 ## 5. MLOps
 
@@ -174,7 +202,23 @@ Open-Meteo ficam na *cache* do Actions e são reconstruíveis.
   a partir deles (`ren.construir_horario`, `meteo.construir_horario`).
 - A meteorologia usa a mesma regra no treino, no backtest e em produção.
 
-## 7. Limitações (conhecidas à partida)
+## 7. Limitações
+
+Observadas nas primeiras execuções reais:
+
+- O backtest de 26 semanas cobre de maio a novembro: ainda não há avaliação
+  num inverno inteiro, que é a época mais difícil para o consumo (frio) e para
+  a solar (nuvens).
+- O gateway da REN não responde se o pedido tiver `Accept: application/json`
+  (fica pendurado até ao timeout). É um comportamento sem documentação, que
+  pode mudar. O workflow `diagnostico-rede` serve para o voltar a verificar.
+- Alguns dias devolvem 404 de forma intermitente (por exemplo 2024-10-17 na
+  primeira tentativa); o *retry* resolve. O dia corrente devolve 404 até a
+  REN o publicar.
+- O Open-Meteo *Previous Runs* teve vários timeouts nos pedidos mensais; o
+  *retry* resolveu todos.
+
+Conhecidas à partida:
 
 - A API da REN não tem documentação formal de contrato: os nomes das séries e o
   formato podem mudar. A ingestão falha de forma explícita em vez de adivinhar.
