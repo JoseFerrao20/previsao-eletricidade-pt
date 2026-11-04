@@ -34,7 +34,8 @@ jobs:
           restore-keys: dados-
 
       - run: scripts/estado.sh abrir
-      - run: uv run eletricidade ingest
+      - timeout-minutes: 75
+        run: uv run eletricidade ingest
 
       - name: Backtest semana a semana (26 semanas)
         run: |

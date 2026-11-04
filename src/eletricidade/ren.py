@@ -46,7 +46,7 @@ def descarregar_dia(dia: date, sessao: requests.Session | None = None, tentativa
             resp = sessao.get(
                 config.REN_PRODUCAO_DIARIA,
                 params=params,
-                timeout=60,
+                timeout=(15, 45),
                 headers={"Accept": "application/json", "User-Agent": "previsao-eletricidade-pt"},
             )
             resp.raise_for_status()
@@ -155,25 +155,45 @@ def e_dia_mudanca_hora(dia: date) -> bool:
     return len(intervalos_utc(dia)) != 96
 
 
+class FonteIndisponivel(ErroREN):
+    """A API falhou em vários dias seguidos: é a fonte, não um dia em particular."""
+
+
 def atualizar(
-    inicio: date, fim: date, raiz: Path | None = None, pausa: float = 0.5
+    inicio: date,
+    fim: date,
+    raiz: Path | None = None,
+    pausa: float = 0.5,
+    max_falhas_seguidas: int = 3,
+    descarregar=None,
 ) -> tuple[list[date], dict[date, str]]:
     """Download incremental dos JSON brutos.
 
     Devolve (dias gravados, falhas). Um dia só é gravado se for interpretável;
-    as falhas ficam registadas sem parar o resto da ingestão.
+    falhas isoladas ficam registadas sem parar o resto da ingestão. Se falharem
+    ``max_falhas_seguidas`` dias seguidos, a fonte está indisponível e a ingestão
+    pára logo (``FonteIndisponivel``) em vez de esgotar o tempo do workflow.
     """
+    descarregar = descarregar or descarregar_dia
     sessao = requests.Session()
     feitos: list[date] = []
     falhas: dict[date, str] = {}
+    seguidas = 0
     for dia in dias_a_descarregar(inicio, fim, raiz):
         try:
-            payload = descarregar_dia(dia, sessao)
+            payload = descarregar(dia, sessao)
             interpretar_dia(payload, dia)  # valida antes de gravar
         except ErroREN as erro:
             falhas[dia] = str(erro)
             log.error("%s", erro)
+            seguidas += 1
+            if seguidas >= max_falhas_seguidas:
+                raise FonteIndisponivel(
+                    f"REN: {seguidas} dias seguidos falharam (último: {erro}); "
+                    f"{len(feitos)} dias gravados antes de parar"
+                ) from erro
             continue
+        seguidas = 0
         destino = caminho_bruto(dia, raiz)
         destino.parent.mkdir(parents=True, exist_ok=True)
         destino.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")

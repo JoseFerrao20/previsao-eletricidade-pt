@@ -89,3 +89,28 @@ def test_atualizar_regista_falhas_sem_parar(tmp_path, monkeypatch):
     assert list(falhas) == [date(2025, 3, 30)]
     horario = ren.construir_horario(tmp_path)
     assert horario.index.tz is not None
+
+
+def test_atualizar_para_quando_a_fonte_nao_responde(tmp_path):
+    """Vários dias seguidos sem resposta: pára logo, não esgota o tempo do workflow."""
+    pedidos = []
+
+    def sem_resposta(dia, sessao):
+        pedidos.append(dia)
+        raise ren.ErroREN(f"REN {dia}: timeout")
+
+    with pytest.raises(ren.FonteIndisponivel):
+        ren.atualizar(date(2025, 1, 1), date(2025, 3, 1), raiz=tmp_path, pausa=0, descarregar=sem_resposta)
+    assert len(pedidos) == 3
+
+
+def test_atualizar_tolera_falhas_isoladas(tmp_path):
+    def intermitente(dia, sessao):
+        if dia.day % 2 == 0:
+            raise ren.ErroREN(f"REN {dia}: erro isolado")
+        return payload_ren(dia)
+
+    feitos, falhas = ren.atualizar(
+        date(2025, 1, 1), date(2025, 1, 6), raiz=tmp_path, pausa=0, descarregar=intermitente
+    )
+    assert len(falhas) == 3 and len(feitos) == 3

@@ -37,7 +37,12 @@ def _saida_github(**valores) -> None:
 def cmd_ingest(args) -> int:
     desde = date.fromisoformat(args.desde)
     hoje = _hoje_local()
-    _, falhas = ren.atualizar(desde, hoje)
+    try:
+        _, falhas = ren.atualizar(desde, hoje)
+    except ren.FonteIndisponivel as erro:
+        log.error("%s", erro)
+        _resumo_github(f"## Ingestão interrompida\n\n{erro}\n")
+        return 2
     horario = ren.construir_horario()
     config.FICH_REN_HORARIO.parent.mkdir(parents=True, exist_ok=True)
     horario.to_parquet(config.FICH_REN_HORARIO)

@@ -40,6 +40,7 @@ jobs:
         run: scripts/estado.sh abrir
 
       - name: Ingestão incremental (REN + Open-Meteo)
+        timeout-minutes: 75
         run: uv run eletricidade ingest
 
       - name: Primeiro treino (só se não houver campeão)

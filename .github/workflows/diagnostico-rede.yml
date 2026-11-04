@@ -36,4 +36,28 @@ jobs:
           teste "servicebus.ren.pt (raiz)" "https://servicebus.ren.pt/"
           teste "datahub.ren.pt" "https://datahub.ren.pt/"
           teste "Open-Meteo Previous Runs" "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=38.72&longitude=-9.14&hourly=temperature_2m_previous_day2,wind_speed_100m_previous_day3&past_days=3&forecast_days=1&timezone=GMT"
-          exit 0
+          echo "::group::Séries (nomes) e pontos por série, $DIA"
+          curl -sS -A "$UA" -m 25 "$BASE/ElectricityProductionBreakdownDaily?date=$DIA&culture=pt-PT" \
+            | jq -c '{xAxis_tipo: (.xAxis|type), n_cat: ((.xAxis.categories // .xAxis[0].categories)|length), series: [.series[] | {name, n: (.data|length), exemplo: .data[40]}]}'
+          echo "::endgroup::"
+          for D in 2024-01-01 2024-06-15 2025-01-01 2025-10-26 2026-03-29; do
+            teste "REN data antiga $D" "$BASE/ElectricityProductionBreakdownDaily?date=$D&culture=pt-PT"
+            jq -c '{n_cat: ((.xAxis.categories // .xAxis[0].categories)|length), primeiras: ((.xAxis.categories // .xAxis[0].categories)[0:3]), ultimas: ((.xAxis.categories // .xAxis[0].categories)[-3:]), n_por_serie: [.series[].data|length]|unique}' corpo.txt
+          done
+      - name: Mesmo pedido com Python requests (cliente do projeto)
+        shell: bash
+        run: |
+          python3 -m pip install --quiet requests || true
+          python3 - <<'PY'
+          import time, requests
+          url = "https://servicebus.ren.pt/datahubapi/electricity/ElectricityProductionBreakdownDaily"
+          for dia in ["2026-11-01", "2024-01-01"]:
+              for nome, hdr in [("Accept json + UA", {"Accept": "application/json", "User-Agent": "previsao-eletricidade-pt"}),
+                                ("só UA", {"User-Agent": "previsao-eletricidade-pt"})]:
+                  t = time.time()
+                  try:
+                      r = requests.get(url, params={"date": dia, "culture": "pt-PT"}, headers=hdr, timeout=(10, 25))
+                      print(dia, nome, r.status_code, len(r.content), f"{time.time()-t:.1f}s", r.url)
+                  except Exception as e:
+                      print(dia, nome, "ERRO", type(e).__name__, f"{time.time()-t:.1f}s")
+          PY
