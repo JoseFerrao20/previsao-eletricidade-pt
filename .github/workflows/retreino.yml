@@ -23,11 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: dados
           key: dados-${{ github.run_id }}
@@ -57,7 +57,7 @@ jobs:
             git pull -q --rebase origin main && git push -q origin HEAD:main
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: backtest
           path: artefactos/
