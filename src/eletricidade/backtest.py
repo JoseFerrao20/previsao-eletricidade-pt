@@ -94,7 +94,7 @@ def erro_semanal(previsoes: pd.DataFrame) -> pd.DataFrame:
                     "semana": semana,
                     "modelo": modelo,
                     "MAE": metricas.mae(g["y"], g[modelo]),
-                    "sMAPE": metricas.smape(g["y"], g[modelo]),
+                    "sMAPE": metricas.smape(g["y"], g[modelo], _limiar(alvo) or None),
                 }
             )
     return pd.DataFrame(linhas)

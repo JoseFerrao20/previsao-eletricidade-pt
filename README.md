@@ -97,18 +97,20 @@ flowchart LR
   - *média da semana anterior*: média da mesma hora nos 7 dias antes da emissão;
   - *persistência diária*: o valor à mesma hora no último dia conhecido.
 - **Métricas:** MAE (MW), MAPE e sMAPE (%), por alvo e por horizonte
-  (D vs. D+1). No solar o MAPE é calculado só nas horas com produção relevante,
-  porque explode quando o valor real é quase zero (isto é dito na tabela).
+  (D vs. D+1). No solar, o MAPE e o sMAPE são calculados só nas horas com
+  produção acima de 100 MW: perto de zero, ambos explodem (no sMAPE, cada hora
+  noturna com 1 MW previsto vale 200 %). A tabela indica-o.
 - **Skill** face ao melhor modelo simples: `1 - MAE_modelo / MAE_referência`.
 
 ### Resultados
 
-*A tabela é gerada automaticamente por `make backtest` e só será preenchida
-com dados reais.*
+A tabela entre os marcadores é escrita por
+`eletricidade backtest --atualizar-readme` (workflow `retrain`). Só será
+preenchida com dados reais.
 
-| Alvo | Modelo | MAE (MW) | MAPE | sMAPE | Skill vs. naive sazonal |
-|------|--------|---------:|-----:|------:|------------------------:|
-| —    | —      | —        | —    | —     | —                       |
+<!-- RESULTADOS:INICIO -->
+*Ainda sem resultados: o backtest ainda não correu sobre dados reais da REN.*
+<!-- RESULTADOS:FIM -->
 
 ## 5. MLOps
 

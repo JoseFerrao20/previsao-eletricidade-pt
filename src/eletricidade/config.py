@@ -15,9 +15,22 @@ DIR_REN_BRUTO = DADOS / "ren" / "bruto"
 DIR_METEO_BRUTO = DADOS / "meteo" / "bruto"
 FICH_REN_HORARIO = DADOS / "ren_horario.parquet"
 FICH_METEO_HORARIO = DADOS / "meteo_horario.parquet"
-DIR_PREVISOES = DADOS / "previsoes"
-REGISTO = RAIZ / "registo"
-ARTEFACTOS = RAIZ / "artefactos"
+ARTEFACTOS = RAIZ / "artefactos"  # saídas do backtest (CSV, tabela markdown)
+SITE = RAIZ / "site"  # painel estático
+
+# Estado de produção, versionado no branch "estado" (montado em ./estado no CI).
+ESTADO = Path(os.environ.get("ELETRICIDADE_ESTADO", RAIZ / "estado"))
+REGISTO = ESTADO / "registo"
+DIR_PREVISOES = ESTADO / "previsoes"
+DIR_MONITOR = ESTADO / "monitor"
+
+# Monitor: limiares de alerta.
+JANELA_MONITOR_DIAS = 7
+LIMIAR_DEGRADACAO = 1.30  # MAE realizado / MAE de referência do backtest
+LIMIAR_PSI = 0.25  # PSI > 0,25 = mudança de distribuição relevante
+# Promoção: o candidato pode ser no máximo 2 % pior do que o campeão (ruído).
+TOLERANCIA_PROMOCAO = 1.02
+VERSOES_A_MANTER = 8
 
 REN_BASE = "https://servicebus.ren.pt/datahubapi/electricity"
 REN_PRODUCAO_DIARIA = f"{REN_BASE}/ElectricityProductionBreakdownDaily"

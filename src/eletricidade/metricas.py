@@ -26,9 +26,16 @@ def mape(y, p, limiar: float = 0.0) -> float:
     return float(100 * np.mean(np.abs(y[ok] - p[ok]) / np.abs(y[ok])))
 
 
-def smape(y, p) -> float:
-    """sMAPE em [0, 200]. Pares com y = p = 0 contam como erro zero."""
+def smape(y, p, limiar: float | None = None) -> float:
+    """sMAPE em [0, 200]. Pares com y = p = 0 contam como erro zero.
+
+    Com ``limiar``, só entram observações com |y| > limiar (no solar, as horas
+    noturnas ou de alvorada valeriam 200 % por cada MW previsto em vão).
+    """
     y, p = _validos(y, p)
+    if limiar is not None:
+        ok = np.abs(y) > limiar
+        y, p = y[ok], p[ok]
     if not y.size:
         return float("nan")
     den = np.abs(y) + np.abs(p)
@@ -37,4 +44,5 @@ def smape(y, p) -> float:
 
 
 def todas(y, p, limiar_mape: float = 0.0) -> dict[str, float]:
-    return {"MAE": mae(y, p), "MAPE": mape(y, p, limiar_mape), "sMAPE": smape(y, p)}
+    limiar_smape = limiar_mape if limiar_mape > 0 else None
+    return {"MAE": mae(y, p), "MAPE": mape(y, p, limiar_mape), "sMAPE": smape(y, p, limiar_smape)}

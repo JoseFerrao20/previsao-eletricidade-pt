@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Previsão da eletricidade</title>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f4f2; --surface-1: #fcfcfb; --border: #e3e2de;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #6f6e69;
+    --grid: #ecebe7;
+    --real: #0b0b0b; --series-1: #2a78d6; --series-2: #eb6834;
+    --good: #0a7d32; --warn: #a15c00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #9a998f;
+      --grid: #2a2a28;
+      --real: #f0efec; --series-1: #3987e5; --series-2: #d95926;
+      --good: #4cc27a; --warn: #e3a33a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #111110; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #9a998f;
+    --grid: #2a2a28;
+    --real: #f0efec; --series-1: #3987e5; --series-2: #d95926;
+    --good: #4cc27a; --warn: #e3a33a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 0; }
+  .sub { color: var(--text-secondary); margin: 0 0 20px; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filtros button { font: inherit; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+                    border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); }
+  .filtros button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); }
+  .cartao { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; margin-bottom: 16px; }
+  .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .estado { font-size: .9rem; color: var(--text-secondary); }
+  .estado .ok { color: var(--good); } .estado .alerta { color: var(--warn); }
+  .legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: .85rem; color: var(--text-secondary); margin: 8px 0 0; }
+  .legenda i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+  .grafico { width: 100%; height: 300px; }
+  .grafico.pequeno { height: 200px; }
+  .vazio { color: var(--text-muted); padding: 24px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; }
+  .tabela { overflow-x: auto; }
+  footer { color: var(--text-muted); font-size: .85rem; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Previsão da eletricidade em Portugal</h1>
+  <p class="sub" id="sub"></p>
+  <div class="filtros" role="group" aria-label="Alvo">
+    <button data-alvo="consumo" aria-pressed="true">Consumo</button>
+    <button data-alvo="eolica" aria-pressed="false">Eólica</button>
+    <button data-alvo="solar" aria-pressed="false">Solar</button>
+  </div>
+
+  <section class="cartao">
+    <div class="cab"><h2 id="t-serie">Real e previsto (MW)</h2><span class="estado" id="estado"></span></div>
+    <div class="legenda">
+      <span><i style="border-color:var(--real)"></i>Real</span>
+      <span><i style="border-color:var(--series-1)"></i>Previsão (D)</span>
+      <span><i style="border-color:var(--series-2);border-top-style:dashed"></i>Naive sazonal</span>
+    </div>
+    <div class="grafico" id="g-serie"></div>
+  </section>
+
+  <section class="cartao">
+    <div class="cab"><h2>Erro diário realizado: MAE (MW), horizonte D</h2></div>
+    <div class="legenda">
+      <span><i style="border-color:var(--series-1)"></i>Modelo</span>
+      <span><i style="border-color:var(--series-2);border-top-style:dashed"></i>Naive sazonal</span>
+    </div>
+    <div class="grafico pequeno" id="g-erro"></div>
+  </section>
+
+  <section class="cartao">
+    <h2>Backtest semana a semana</h2>
+    <div class="tabela" id="t-backtest"></div>
+  </section>
+
+  <footer>
+    Dados: <a href="https://datahub.ren.pt/">REN Data Hub</a> · meteorologia:
+    <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) ·
+    <a href="https://github.com/JoseFerrao20/previsao-eletricidade-pt">código</a>
+  </footer>
+</main>
+<script>
+const DADOS = /*__DADOS__*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = v => (v == null || Number.isNaN(v)) ? "—" : Math.round(v).toLocaleString("pt-PT");
+let alvo = "consumo";
+
+function layout(yTitulo) {
+  return {
+    margin: {l: 56, r: 12, t: 8, b: 36}, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: {family: "system-ui, sans-serif", color: css("--text-secondary"), size: 12},
+    hovermode: "x unified", showlegend: false, separators: ", ",
+    hoverlabel: {bgcolor: css("--surface-1"), bordercolor: css("--border"), font: {color: css("--text-primary")}},
+    xaxis: {gridcolor: css("--grid"), linecolor: css("--border"), zeroline: false,
+            tickformat: "%d/%m", hoverformat: "%d/%m %H:%M"},
+    yaxis: {gridcolor: css("--grid"), linecolor: css("--border"), zeroline: false, rangemode: "tozero",
+            title: {text: yTitulo, font: {size: 11}}, separatethousands: true},
+  };
+}
+const linha = (s, nome, cor, extra = {}) => s ? ({x: s.x, y: s.y, name: nome, type: "scatter", mode: "lines",
+  line: {color: cor, width: 2, ...extra}, hovertemplate: "%{y:,.0f}"}) : null;
+
+function vazio(id, txt) { document.getElementById(id).innerHTML = `<p class="vazio">${txt}</p>`; }
+
+function desenhar() {
+  if (!DADOS) { vazio("g-serie", "Ainda sem dados."); return; }
+  const b = DADOS.alvos[alvo];
+  document.getElementById("sub").textContent =
+    `Previsões a 48 h emitidas à meia-noite (hora de Lisboa). Atualizado ${DADOS.gerado_em}.`;
+  document.getElementById("t-serie").textContent = `${b.nome}: real e previsto (MW)`;
+  const m = b.monitor;
+  const est = document.getElementById("estado");
+  est.innerHTML = m ? (m.sinais.length
+      ? `<span class="alerta">⚠ ${m.sinais.join("; ")}</span>`
+      : `<span class="ok">✓ sem alertas</span> · modelo ${m.versao}`)
+    : (b.versao ? `modelo ${b.versao}` : "");
+
+  const tr = [linha(b.real, "Real", css("--real")), linha(b.previsao, "Previsão", css("--series-1")),
+              linha(b.naive, "Naive sazonal", css("--series-2"), {dash: "dash"})].filter(Boolean);
+  if (tr.length) Plotly.react("g-serie", tr, layout("MW"), {displayModeBar: false, responsive: true});
+  else vazio("g-serie", "Sem dados para este alvo.");
+
+  if (b.erro && b.erro.previsao) {
+    Plotly.react("g-erro", [linha(b.erro.previsao, "Modelo", css("--series-1")),
+      linha(b.erro.naive_sazonal, "Naive sazonal", css("--series-2"), {dash: "dash"})].filter(Boolean),
+      layout("MAE (MW)"), {displayModeBar: false, responsive: true});
+  } else vazio("g-erro", "Ainda não há previsões com valores reais para comparar.");
+
+  const linhas = (DADOS.backtest || []).filter(r => r.alvo === alvo);
+  const nomes = {lightgbm: "LightGBM", naive_sazonal: "Naive sazonal", media_semana: "Média da semana anterior",
+                 persistencia: "Persistência (D-1)"};
+  document.getElementById("t-backtest").innerHTML = linhas.length ? `<table>
+    <thead><tr><th>Modelo</th><th>Horizonte</th><th>MAE (MW)</th><th>MAPE</th><th>sMAPE</th><th>Skill</th></tr></thead>
+    <tbody>${linhas.map(r => `<tr><td>${nomes[r.modelo] || r.modelo}</td><td>${r.lead ? (r.lead === 1 ? "D" : "D+1") : "D e D+1"}</td>
+      <td>${fmt(r.MAE)}</td><td>${r.MAPE == null ? "—" : r.MAPE.toFixed(1) + "%"}</td>
+      <td>${r.sMAPE.toFixed(1)}%</td><td>${(100 * r.skill_vs_naive_sazonal).toFixed(1)}%</td></tr>`).join("")}</tbody></table>`
+    : `<p class="vazio">O backtest ainda não correu sobre dados reais.</p>`;
+}
+
+document.querySelectorAll(".filtros button").forEach(bt => bt.addEventListener("click", () => {
+  alvo = bt.dataset.alvo;
+  document.querySelectorAll(".filtros button").forEach(o => o.setAttribute("aria-pressed", o === bt));
+  desenhar();
+}));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", desenhar);
+desenhar();
+</script>
+</body>
+</html>
