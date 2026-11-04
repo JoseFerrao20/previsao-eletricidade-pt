@@ -1,0 +1,39 @@
+name: diagnostico-rede
+
+# Verifica, a partir de um runner, se as APIs respondem ao cliente do projeto
+# (identificado com o seu próprio User-Agent). Só leitura; corre à mão.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rede:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pedidos de teste
+        shell: bash
+        run: |
+          set +e
+          BASE="https://servicebus.ren.pt/datahubapi/electricity"
+          DIA="$(date -u -d '3 days ago' +%F)"
+          UA="previsao-eletricidade-pt (+https://github.com/${GITHUB_REPOSITORY})"
+          teste() {
+            nome="$1"; shift
+            echo "::group::$nome"
+            curl -sS -A "$UA" -o corpo.txt -m 25 \
+              -w "HTTP %{http_code} | ip %{remote_ip} | ligação %{time_connect}s | TLS %{time_appconnect}s | total %{time_total}s | %{size_download} B\n" "$@"
+            echo "rc=$?"; head -c 300 corpo.txt; echo
+            echo "::endgroup::"
+          }
+          getent hosts servicebus.ren.pt datahub.ren.pt
+          teste "REN ProductionBreakdownDaily pt-PT" "$BASE/ElectricityProductionBreakdownDaily?date=$DIA&culture=pt-PT"
+          teste "REN ProductionBreakdownDaily en-GB" "$BASE/ElectricityProductionBreakdownDaily?date=$DIA&culture=en-GB"
+          teste "REN ConsumptionSupplyDaily" "$BASE/ElectricityConsumptionSupplyDaily?date=$DIA&culture=pt-PT"
+          teste "REN HTTP/1.1 IPv4" --http1.1 -4 "$BASE/ElectricityProductionBreakdownDaily?date=$DIA&culture=pt-PT"
+          teste "servicebus.ren.pt (raiz)" "https://servicebus.ren.pt/"
+          teste "datahub.ren.pt" "https://datahub.ren.pt/"
+          teste "Open-Meteo Previous Runs" "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=38.72&longitude=-9.14&hourly=temperature_2m_previous_day2,wind_speed_100m_previous_day3&past_days=3&forecast_days=1&timezone=GMT"
+          exit 0
