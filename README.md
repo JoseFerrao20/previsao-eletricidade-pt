@@ -140,17 +140,18 @@ Backtest semana a semana: 26 semanas de teste, de 2026-05-04 a 2026-11-01; horiz
 | solar | 142 / 156 MW | média da semana anterior (185) | +19 % |
 
 - **Consumo:** o MAPE de 3,2 % é o resultado mais sólido. O naive sazonal
-  já capta bem o padrão semanal; o modelo ganha nos feriados, nas pontes e nos
-  dias quentes. A persistência (D-1) é pior do que o naive porque ignora o
-  fim de semana.
+  já capta bem o padrão semanal, e mesmo assim o modelo reduz o erro em
+  36 %. A persistência (D-1) é a pior referência, sobretudo em D+1
+  (624 MW), porque ignora o fim de semana. Ainda não há análise de onde vem o
+  ganho (feriados, temperatura): fica como próximo passo.
 - **Eólica:** é onde o modelo mais ganha, porque o vento previsto é
   informação que nenhum modelo simples tem. O MAPE (80 %+) é enganador: há
   muitas horas com pouca produção, onde o erro relativo explode. Para a eólica,
   o MAE é a métrica que conta.
-- **Solar:** o ganho é o mais pequeno. Num dia de céu limpo, o dia anterior já
-  é uma boa previsão, e a radiação prevista só ajuda nos dias de nuvens. O
-  período de teste (maio a novembro) é sobretudo de céu limpo; o inverno
-  deve ser mais difícil.
+- **Solar:** o ganho é o mais pequeno. Uma explicação plausível, ainda por
+  confirmar: em dias de céu limpo o dia anterior já é uma boa previsão, e a
+  radiação prevista só acrescenta nos dias com nuvens. O período de teste
+  (maio a novembro) não inclui o inverno.
 - De D para D+1 o erro sobe 8 a 17 %, em linha com a meteorologia mais
   antiga (previsão de 3 dias antes em vez de 2).
 
