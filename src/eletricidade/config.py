@@ -34,7 +34,8 @@ VERSOES_A_MANTER = 8
 
 REN_BASE = "https://servicebus.ren.pt/datahubapi/electricity"
 REN_PRODUCAO_DIARIA = f"{REN_BASE}/ElectricityProductionBreakdownDaily"
-REN_CULTURE = "pt-PT"
+REN_CULTURE = "pt-PT"  # a API aceita só pt-PT e en-US
+USER_AGENT = "previsao-eletricidade-pt (+https://github.com/JoseFerrao20/previsao-eletricidade-pt)"
 
 OPEN_METEO_PREVIOUS_RUNS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 
@@ -46,11 +47,12 @@ ALVOS = ("consumo", "eolica", "solar")
 
 # Padrões (normalizados: minúsculas, sem acentos) que identificam cada série
 # alvo no JSON da REN. "Consumo" tem de ser distinto de "consumo + bombagem".
-PADROES_SERIES = {
-    "consumo": {"incluir": ("consumo", "consumption"), "excluir": ("bombagem", "armazen", "storage", "pump")},
-    "eolica": {"incluir": ("eolica", "wind"), "excluir": ()},
-    "solar": {"incluir": ("solar", "fotovolt"), "excluir": ()},
-}
+# Nomes das séries em culture=pt-PT, observados na API (2026-11): "Consumo",
+# "Consumo + Armazenamento" (= Consumo + Bombagem + Consumo Baterias), "Bombagem",
+# "Consumo Baterias", "Injeção de Baterias", "Eólica", "Solar", "Hídrica", ...
+# Comparação exata após normalização (sem acentos, minúsculas): "Consumo" é o
+# consumo líquido, sem bombagem nem carga de baterias.
+SERIES_REN = {"consumo": "consumo", "eolica": "eolica", "solar": "solar"}
 
 
 @dataclass(frozen=True)

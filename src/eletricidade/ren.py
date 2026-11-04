@@ -47,7 +47,9 @@ def descarregar_dia(dia: date, sessao: requests.Session | None = None, tentativa
                 config.REN_PRODUCAO_DIARIA,
                 params=params,
                 timeout=(15, 45),
-                headers={"Accept": "application/json", "User-Agent": "previsao-eletricidade-pt"},
+                # Sem "Accept: application/json": com esse cabeçalho o gateway da REN não
+                # responde (timeout); sem ele responde em < 1 s. Ver workflow diagnostico-rede.
+                headers={"User-Agent": config.USER_AGENT},
             )
             resp.raise_for_status()
             return resp.json()
@@ -82,13 +84,8 @@ def intervalos_utc(dia: date) -> pd.DatetimeIndex:
 def identificar_series(nomes: list[str]) -> dict[str, str]:
     """Associa cada alvo ao nome exato da série. Falha se faltar ou for ambíguo."""
     resultado: dict[str, str] = {}
-    for alvo, padrao in config.PADROES_SERIES.items():
-        candidatos = [
-            n
-            for n in nomes
-            if any(p in normalizar(n) for p in padrao["incluir"])
-            and not any(p in normalizar(n) for p in padrao["excluir"])
-        ]
+    for alvo, nome_esperado in config.SERIES_REN.items():
+        candidatos = [n for n in nomes if normalizar(n) == nome_esperado]
         if len(candidatos) != 1:
             raise ErroREN(f"Série '{alvo}': esperava 1 candidata, encontrei {candidatos} em {nomes}")
         resultado[alvo] = candidatos[0]

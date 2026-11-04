@@ -38,7 +38,24 @@ Python, TypeScript e MATLAB):
 - Não há documentação formal de limites de pedidos: o cliente faz pedidos
   sequenciais, com pausa e *retry* com *backoff*.
 
-### Decisões que dependem do primeiro download real
+### Confirmado a partir de um runner do GitHub (workflow `diagnostico-rede`, 2026-11-04)
+
+- A API responde em < 1 s a partir dos runners, com histórico desde pelo menos
+  2024-01-01. **Com o cabeçalho `Accept: application/json` o gateway não
+  responde** (timeout): foi a causa da primeira execução falhada do `diario`
+  (2 h de timeouts). O cliente já não envia esse cabeçalho.
+- `culture` só aceita `pt-PT` e `en-US` (HTTP 400 com outros valores).
+- `xAxis` é um objeto; 96 rótulos `HH:MM` por dia, **92** no dia em que a hora
+  avança (2026-03-29) e **100** quando recua (2025-10-26), como previsto.
+- Séries em `pt-PT`: Consumo + Armazenamento, Consumo, Bombagem, Hídrica, Solar,
+  Importação, Exportação, Eólica, Gás Natural, Outra Térmica, Biomassa, Carvão,
+  Ondas, Consumo Baterias, Injeção de Baterias. "Consumo + Armazenamento" =
+  Consumo + Bombagem + Consumo Baterias; o alvo é **Consumo** (líquido). O
+  mapeamento passou a comparação exata do nome normalizado, porque
+  "Consumo Baterias" tornaria ambíguo um mapeamento por substring.
+- Open-Meteo *Previous Runs* responde e tem `wind_speed_100m_previous_day3`.
+
+### Decisões que dependiam do primeiro download real
 
 1. Nomes exatos das séries em `pt-PT` → o mapeamento usa normalização (sem
    acentos, minúsculas) e falha se uma série-alvo for ambígua ou inexistente.

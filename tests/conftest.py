@@ -10,19 +10,31 @@ import pytest
 
 from eletricidade import config, ren
 
+# Nomes e ordem das séries tal como a API os devolve (culture=pt-PT, 2026-11).
+# Os valores das fixtures continuam sintéticos.
+SERIES_REAIS = [
+    "Consumo + Armazenamento",
+    "Consumo",
+    "Bombagem",
+    "Hídrica",
+    "Solar",
+    "Importação",
+    "Exportação",
+    "Eólica",
+    "Gás Natural",
+    "Outra Térmica",
+    "Biomassa",
+    "Carvão",
+    "Ondas",
+    "Consumo Baterias",
+    "Injeção de Baterias",
+]
+
 
 def payload_ren(dia: date, n: int | None = None, nomes=None, valor=1000.0) -> dict:
     """JSON tipo Highcharts com ``n`` intervalos (por omissão, os do dia civil)."""
     n = n if n is not None else len(ren.intervalos_utc(dia))
-    nomes = nomes or [
-        "Hídrica",
-        "Eólica",
-        "Solar",
-        "Gás Natural",
-        "Importação",
-        "Consumo",
-        "Consumo + Bombagem",
-    ]
+    nomes = nomes or SERIES_REAIS
     categorias = [f"{(i // 4) % 24:02d}:{(i % 4) * 15:02d}" for i in range(n)]
     return {
         "xAxis": {"categories": categorias, "title": {"text": "Hora"}},

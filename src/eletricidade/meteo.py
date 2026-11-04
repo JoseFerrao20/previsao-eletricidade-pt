@@ -52,7 +52,12 @@ def descarregar(inicio: date, fim: date, tentativas: int = 4) -> list[dict]:
     espera = 5.0
     for tentativa in range(1, tentativas + 1):
         try:
-            resp = requests.get(config.OPEN_METEO_PREVIOUS_RUNS, params=params, timeout=120)
+            resp = requests.get(
+                config.OPEN_METEO_PREVIOUS_RUNS,
+                params=params,
+                timeout=(15, 120),
+                headers={"User-Agent": config.USER_AGENT},
+            )
             resp.raise_for_status()
             dados = resp.json()
             return dados if isinstance(dados, list) else [dados]

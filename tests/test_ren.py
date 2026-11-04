@@ -5,7 +5,11 @@ import pandas as pd
 import pytest
 
 from eletricidade import ren
-from tests.conftest import payload_ren
+from tests.conftest import SERIES_REAIS, payload_ren
+
+
+def _serie(payload: dict, nome: str) -> dict:
+    return next(s for s in payload["series"] if s["name"] == nome)
 
 
 def test_normalizar_remove_acentos_e_maiusculas():
@@ -13,14 +17,15 @@ def test_normalizar_remove_acentos_e_maiusculas():
     assert ren.normalizar("Hídrica") == "hidrica"
 
 
-def test_identificar_series_distingue_consumo_de_bombagem():
-    nomes = ["Consumo", "Consumo + Bombagem", "Eólica", "Solar"]
-    assert ren.identificar_series(nomes) == {"consumo": "Consumo", "eolica": "Eólica", "solar": "Solar"}
+def test_identificar_series_com_os_nomes_reais_da_api():
+    """'Consumo' é o líquido: não confundir com armazenamento, bombagem ou baterias."""
+    esperado = {"consumo": "Consumo", "eolica": "Eólica", "solar": "Solar"}
+    assert ren.identificar_series(SERIES_REAIS) == esperado
 
 
 def test_identificar_series_falha_se_ambiguo_ou_ausente():
     with pytest.raises(ren.ErroREN):
-        ren.identificar_series(["Consumo", "Eólica", "Solar", "Solar Térmica"])
+        ren.identificar_series(["Consumo", "Eólica", "Solar", "SOLAR"])  # dois nomes iguais
     with pytest.raises(ren.ErroREN):
         ren.identificar_series(["Consumo", "Eólica"])
 
@@ -50,8 +55,8 @@ def test_interpretar_aceita_xaxis_em_lista_e_pontos_em_dicionario():
     dia = date(2025, 6, 1)
     p = payload_ren(dia)
     p["xAxis"] = [p["xAxis"]]
-    p["series"][1]["data"] = [{"y": 5.0}] * 96
-    p["series"][2]["data"][-1] = None  # dia corrente incompleto
+    _serie(p, "Eólica")["data"] = [{"y": 5.0}] * 96
+    _serie(p, "Solar")["data"][-1] = None  # dia corrente incompleto
     tabela = ren.interpretar_dia(p, dia)
     assert (tabela["eolica"] == 5.0).all()
     assert np.isnan(tabela["solar"].iloc[-1])
@@ -60,7 +65,7 @@ def test_interpretar_aceita_xaxis_em_lista_e_pontos_em_dicionario():
 def test_para_horario_so_fecha_horas_completas():
     dia = date(2025, 6, 1)
     p = payload_ren(dia)
-    p["series"][5]["data"][-1] = None
+    _serie(p, "Consumo")["data"][-1] = None
     horario = ren.para_horario(ren.interpretar_dia(p, dia))
     assert len(horario) == 24
     assert np.isnan(horario["consumo"].iloc[-1])
