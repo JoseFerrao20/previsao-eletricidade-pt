@@ -47,7 +47,7 @@
             padding: 16px; margin-bottom: 16px; }
   .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
   .estado { font-size: .9rem; color: var(--text-secondary); }
-  .estado .ok { color: var(--good); } .estado .alerta { color: var(--warn); }
+  .estado .ok { color: var(--good); } .estado .alerta, .estado .aviso { color: var(--warn); }
   .legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: .85rem; color: var(--text-secondary); margin: 8px 0 0; }
   .legenda i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
   .grafico { width: 100%; height: 300px; }
@@ -133,10 +133,12 @@ function desenhar() {
   document.getElementById("t-serie").textContent = `${b.nome}: real e previsto (MW)`;
   const m = b.monitor;
   const est = document.getElementById("estado");
+  const avisos = (m && m.avisos && m.avisos.length) ? ` · <span class="aviso">${m.avisos.length} aviso(s) de drift</span>` : "";
   est.innerHTML = m ? (m.sinais.length
       ? `<span class="alerta">⚠ ${m.sinais.join("; ")}</span>`
-      : `<span class="ok">✓ sem alertas</span> · modelo ${m.versao}`)
+      : `<span class="ok">✓ sem alertas</span>${avisos} · modelo ${m.versao}`)
     : (b.versao ? `modelo ${b.versao}` : "");
+  est.title = m && m.avisos ? m.avisos.join("\n") : "";
 
   const tr = [linha(b.real, "Real", css("--real")), linha(b.previsao, "Previsão", css("--series-1")),
               linha(b.naive, "Naive sazonal", css("--series-2"), {dash: "dash"})].filter(Boolean);

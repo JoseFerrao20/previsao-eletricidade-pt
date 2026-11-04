@@ -27,7 +27,7 @@ DIR_MONITOR = ESTADO / "monitor"
 # Monitor: limiares de alerta.
 JANELA_MONITOR_DIAS = 7
 LIMIAR_DEGRADACAO = 1.30  # MAE realizado / MAE de referência do backtest
-LIMIAR_PSI = 0.25  # PSI > 0,25 = mudança de distribuição relevante
+LIMIAR_PSI = 0.25  # PSI > 0,25 = mudança relevante (aviso de drift, face à mesma época do ano)
 # Promoção: o candidato pode ser no máximo 2 % pior do que o campeão (ruído).
 TOLERANCIA_PROMOCAO = 1.02
 VERSOES_A_MANTER = 8

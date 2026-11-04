@@ -4,9 +4,18 @@ Sinais (por alvo):
   - degradação: MAE realizado dos últimos N dias / MAE de referência do backtest
     do campeão > LIMIAR_DEGRADACAO;
   - pior do que o naive sazonal no mesmo período (com as mesmas horas);
-  - drift: PSI de alguma feature contínua (últimos 14 dias de emissões vs.
-    treino) > LIMIAR_PSI.
-Qualquer sinal -> alerta (issue no GitHub) e pedido de retreino.
+Qualquer um destes sinais -> alerta (issue no GitHub) e pedido de retreino.
+
+Avisos (não disparam retreino):
+  - drift da meteorologia prevista: PSI dos últimos 14 dias face à mesma época
+    do ano (mesmo intervalo do calendário ±7 dias) nos dados anteriores > LIMIAR_PSI.
+
+Porquê só meteorologia e só com referência sazonal: comparar uma semana de
+novembro com dois anos inteiros dá "drift" todos os dias no calendário, na
+temperatura e na radiação (foi o que aconteceu na primeira execução real). Os
+lags do próprio alvo também não entram: a sua mudança já é medida pelo erro
+realizado. Um drift sem degradação do erro não é acionável; com degradação, o
+erro já dispara o alerta.
 """
 
 from __future__ import annotations
@@ -19,6 +28,10 @@ import numpy as np
 import pandas as pd
 
 from . import config, metricas
+from .registo import perfil_features
+
+JANELA_DRIFT_DIAS = 14
+RAIO_SAZONAL_DIAS = 7  # margem à volta da janela, nos anos anteriores
 
 
 def psi(esperado: list[float], limites: list[float], valores: np.ndarray, eps: float = 1e-4) -> float:
@@ -29,6 +42,33 @@ def psi(esperado: list[float], limites: list[float], valores: np.ndarray, eps: f
     obs = np.clip(contagens / valores.size, eps, None)
     esp = np.clip(np.asarray(esperado, dtype=float), eps, None)
     return float(np.sum((obs - esp) * np.log(obs / esp)))
+
+
+def colunas_drift(exemplos: pd.DataFrame) -> list[str]:
+    """Features exógenas contínuas: a meteorologia prevista (colunas ``grupo__variavel``)."""
+    return [c for c in exemplos.columns if "__" in c]
+
+
+def drift_sazonal(exemplos: pd.DataFrame, hoje: pd.Timestamp) -> dict[str, float]:
+    """PSI da janela recente face à mesma época do ano nos dados anteriores a essa janela."""
+    colunas = colunas_drift(exemplos)
+    if not colunas or exemplos.empty:
+        return {}
+    inicio = hoje - pd.Timedelta(days=JANELA_DRIFT_DIAS)
+    dia = pd.to_datetime(exemplos["dia"])
+    recente = exemplos[(exemplos["origem"] > inicio) & (exemplos["origem"] <= hoje)]
+    centro = (inicio + pd.Timedelta(days=JANELA_DRIFT_DIAS / 2)).day_of_year
+    distancia = np.abs(dia.dt.day_of_year - centro)
+    distancia = np.minimum(distancia, 365 - distancia)
+    referencia = exemplos[(dia < inicio) & (distancia <= RAIO_SAZONAL_DIAS + JANELA_DRIFT_DIAS / 2)]
+    if len(referencia) < 24 * 30 or recente.empty:
+        return {}
+    resultado = {}
+    for coluna, perfil in perfil_features(referencia, colunas).items():
+        resultado[coluna] = psi(
+            perfil["proporcoes"], perfil["limites"], recente[coluna].to_numpy(dtype=float)
+        )
+    return resultado
 
 
 def carregar_previsoes(pasta: Path | None = None) -> pd.DataFrame:
@@ -67,7 +107,7 @@ def historico_erro(realizadas: pd.DataFrame) -> pd.DataFrame:
 
 def avaliar(
     realizadas: pd.DataFrame,
-    exemplos_recentes: dict[str, pd.DataFrame],
+    exemplos: dict[str, pd.DataFrame],
     metas: dict[str, dict],
     hoje: pd.Timestamp,
 ) -> dict:
@@ -94,18 +134,14 @@ def avaliar(
         else:
             info["nota"] = "menos de 24 horas com valores reais na janela"
 
-        drift = {}
-        ex = exemplos_recentes.get(alvo)
-        if ex is not None and not ex.empty:
-            for coluna, perfil in meta.get("perfil_features", {}).items():
-                if coluna in ex:
-                    drift[coluna] = psi(
-                        perfil["proporcoes"], perfil["limites"], ex[coluna].to_numpy(dtype=float)
-                    )
+        ex = exemplos.get(alvo)
+        drift = drift_sazonal(ex, hoje) if ex is not None else {}
         info["psi"] = {k: round(v, 3) for k, v in drift.items() if np.isfinite(v)}
-        for coluna, valor in info["psi"].items():
-            if valor > config.LIMIAR_PSI:
-                sinais.append(f"drift em '{coluna}' (PSI {valor:.2f})")
+        info["avisos"] = [
+            f"meteorologia invulgar para a época: '{c}' (PSI {v:.2f})"
+            for c, v in info["psi"].items()
+            if v > config.LIMIAR_PSI
+        ]
         info["sinais"] = sinais
         relatorio["alvos"][alvo] = info
     relatorio["alerta"] = any(a["sinais"] for a in relatorio["alvos"].values())
@@ -124,7 +160,8 @@ def markdown(relatorio: dict) -> str:
                 f"naive sazonal: {info['MAE_naive_sazonal']:.0f} MW · "
                 f"referência do backtest: {info['MAE_referencia'] or float('nan'):.0f} MW"
             )
-        linhas += [f"- {s}" for s in info["sinais"]] or ["- sem sinais"]
+        linhas += [f"- {s}" for s in info["sinais"]] or ["- sem sinais de degradação"]
+        linhas += [f"- aviso: {a}" for a in info.get("avisos", [])]
         linhas.append("")
     if relatorio["retreinar"]:
         linhas.append("O retreino foi pedido automaticamente.")

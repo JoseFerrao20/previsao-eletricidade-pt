@@ -129,17 +129,16 @@ def cmd_monitorizar(args) -> int:
     hoje = pd.Timestamp(_hoje_local())
     previsoes = monitor.carregar_previsoes()
     realizadas = monitor.juntar_reais(previsoes, grade) if not previsoes.empty else pd.DataFrame()
-    metas, recentes = {}, {}
+    metas, exemplos = {}, {}
     for alvo in config.ALVOS:
         try:
             _, metas[alvo] = registo.carregar(alvo)
         except FileNotFoundError:
             continue
-        ex = features.construir_exemplos(grade, grupos, alvo, ate=hoje + pd.Timedelta(days=1))
-        recentes[alvo] = ex[ex["origem"] > hoje - pd.Timedelta(days=14)]
+        exemplos[alvo] = features.construir_exemplos(grade, grupos, alvo, ate=hoje + pd.Timedelta(days=1))
     if realizadas.empty:
         realizadas = pd.DataFrame(columns=["alvo", "dia", "hora", "lead", "y", *monitor.MODELOS_MONITOR])
-    relatorio = monitor.avaliar(realizadas, recentes, metas, hoje)
+    relatorio = monitor.avaliar(realizadas, exemplos, metas, hoje)
     hist = monitor.historico_erro(realizadas) if len(realizadas) else pd.DataFrame()
     monitor.guardar(relatorio, hist)
     md = monitor.markdown(relatorio)

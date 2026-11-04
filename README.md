@@ -145,10 +145,19 @@ a semana das últimas 4 semanas, (1) bater o naive sazonal e (2) não for mais d
 2 % pior do que o erro **realizado** do campeão nas mesmas horas. Nenhum dos dois
 viu esses dados no treino.
 
-**Monitor** (`src/eletricidade/monitor.py`), em janelas de 7 dias:
-- degradação: MAE realizado > 1,3 × MAE de referência do backtest do campeão;
-- pior do que o naive sazonal nas mesmas horas;
-- drift: PSI > 0,25 em alguma feature contínua (meteorologia, lags) face ao treino.
+**Monitor** (`src/eletricidade/monitor.py`). O erro decide; o drift explica.
+- **Alertas** (abrem *issue* e disparam o retreino), em janelas de 7 dias:
+  - degradação: MAE realizado > 1,3 × MAE de referência do backtest do campeão;
+  - pior do que o naive sazonal nas mesmas horas.
+- **Avisos de drift** (aparecem no relatório e no painel, sem retreino): PSI >
+  0,25 na meteorologia prevista dos últimos 14 dias face ao **mesmo intervalo
+  do calendário** (±7 dias) nos dados anteriores.
+
+A primeira versão comparava a semana recente com todo o treino e em todas as
+features. Na primeira execução real deu "drift" em tudo: no mês, no dia do ano,
+na temperatura de novembro. Seria um alerta e um retreino por dia. Por isso, o
+calendário e os lags do próprio alvo ficaram de fora (a mudança do alvo já se
+mede no erro), e a referência passou a ser sazonal.
 
 **Onde fica cada coisa.** O código fica em `main`. O estado de produção
 (registo, previsões emitidas, relatórios do monitor, resultados do backtest)

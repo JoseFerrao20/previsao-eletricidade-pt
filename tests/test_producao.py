@@ -63,8 +63,8 @@ def test_ciclo_completo(estado, horario_sintetico):
     realizadas = monitor.juntar_reais(previsoes, grade)
     assert len(realizadas) == len(previsoes)
     metas = {alvo: registo.carregar(alvo)[1] for alvo in config.ALVOS}
-    recentes = {alvo: features.construir_exemplos(grade, None, alvo) for alvo in config.ALVOS}
-    rel = monitor.avaliar(realizadas, recentes, metas, pd.Timestamp("2025-04-11"))
+    exemplos = {alvo: features.construir_exemplos(grade, None, alvo) for alvo in config.ALVOS}
+    rel = monitor.avaliar(realizadas, exemplos, metas, pd.Timestamp("2025-04-11"))
     assert set(rel["alvos"]) == set(config.ALVOS)
     assert rel["alvos"]["consumo"]["n_horas"] > 24
     hist = monitor.historico_erro(realizadas)
@@ -99,3 +99,43 @@ def test_degradacao_gera_alerta():
     sinais = rel["alvos"]["consumo"]["sinais"]
     assert rel["alerta"] and rel["retreinar"]
     assert any("degradação" in s for s in sinais) and any("naive" in s for s in sinais)
+
+
+def _exemplos_meteo(dias: pd.DatetimeIndex, valores: np.ndarray) -> pd.DataFrame:
+    linhas = pd.DataFrame({"dia": np.repeat(dias, 24), "hora": np.tile(range(24), len(dias))})
+    linhas["origem"] = linhas["dia"]
+    linhas["vento__wind_speed_100m"] = valores
+    linhas["mes"] = linhas["dia"].dt.month  # calendário: nunca entra no drift
+    return linhas
+
+
+def test_drift_sazonal_nao_dispara_so_por_mudar_a_estacao():
+    """Vento com ciclo anual mas sem anomalia: o novembro recente compara-se com novembros."""
+    rng = np.random.default_rng(1)
+    dias = pd.date_range("2024-01-01", "2026-11-04")
+    doy = np.repeat(dias.day_of_year.to_numpy(), 24)
+    sazonal = 8 + 4 * np.cos(2 * np.pi * doy / 365) + rng.normal(0, 1, doy.size)
+    ex = _exemplos_meteo(dias, sazonal)
+    hoje = pd.Timestamp("2026-11-04")
+    psi = monitor.drift_sazonal(ex, hoje)
+    assert set(psi) == {"vento__wind_speed_100m"}
+    assert psi["vento__wind_speed_100m"] < config.LIMIAR_PSI
+
+    anomalo = sazonal.copy()
+    anomalo[ex["dia"] > hoje - pd.Timedelta(days=14)] += 5  # duas semanas muito mais ventosas
+    psi = monitor.drift_sazonal(_exemplos_meteo(dias, anomalo), hoje)
+    assert psi["vento__wind_speed_100m"] > config.LIMIAR_PSI
+
+
+def test_drift_e_aviso_e_nao_dispara_retreino():
+    rng = np.random.default_rng(2)
+    dias = pd.date_range("2024-01-01", "2026-11-04")
+    valores = rng.normal(8, 1, len(dias) * 24)
+    ex = _exemplos_meteo(dias, valores)
+    ex.loc[ex["dia"] > pd.Timestamp("2026-10-21"), "vento__wind_speed_100m"] += 6
+    vazio = pd.DataFrame(columns=["alvo", "dia", "hora", "lead", "y", *monitor.MODELOS_MONITOR])
+    meta = {"versao": "v", "metricas": {"MAE_backtest": 400.0}}
+    rel = monitor.avaliar(vazio, {"eolica": ex}, {"eolica": meta}, pd.Timestamp("2026-11-04"))
+    info = rel["alvos"]["eolica"]
+    assert info["avisos"] and not info["sinais"]
+    assert not rel["alerta"] and not rel["retreinar"]
