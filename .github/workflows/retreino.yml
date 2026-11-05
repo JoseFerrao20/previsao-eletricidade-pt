@@ -37,10 +37,10 @@ jobs:
       - timeout-minutes: 75
         run: uv run eletricidade ingest
 
-      - name: Backtest semana a semana (26 semanas)
+      - name: Backtest semana a semana (52 semanas)
         run: |
-          uv run eletricidade backtest --semanas 26 --atualizar-readme
-          cp artefactos/backtest_*.csv artefactos/resultados.md estado/
+          uv run eletricidade backtest --semanas 52 --atualizar-readme
+          cp artefactos/backtest_*.csv artefactos/resultados.md artefactos/analise.md estado/
 
       - name: Treino e promoção
         run: uv run eletricidade treinar

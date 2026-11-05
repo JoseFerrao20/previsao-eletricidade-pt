@@ -46,7 +46,7 @@ jobs:
       - name: Primeiro treino (só se não houver campeão)
         run: |
           if [ ! -f estado/registo/campeoes.json ]; then
-            uv run eletricidade backtest --semanas 26
+            uv run eletricidade backtest --semanas 52
             cp artefactos/backtest_*.csv estado/
             uv run eletricidade treinar
           fi

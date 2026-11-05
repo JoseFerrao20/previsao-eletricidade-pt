@@ -12,7 +12,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from . import backtest, config, features, meteo, monitor, painel, producao, registo, ren
+from . import analise, backtest, config, features, meteo, monitor, painel, producao, registo, ren
 
 log = logging.getLogger("eletricidade")
 
@@ -82,17 +82,31 @@ def cmd_backtest(args) -> int:
     (config.ARTEFACTOS / "resultados.md").write_text(tabela + "\n", encoding="utf-8")
     print(tabela)
     _resumo_github(tabela)
+    segmentos = analise.tabela_completa(previsoes, ex)
+    segmentos.to_csv(config.ARTEFACTOS / "backtest_segmentos.csv", index=False)
+    texto_analise = (
+        f"MAE (MW) por segmento nas mesmas {semanas.nunique()} semanas, horizontes D e D+1 agregados. "
+        "*Melhor simples* é a melhor das três referências **dentro de cada segmento**, escolhida "
+        "depois de ver o resultado (comparação deliberadamente exigente). A meteorologia é a "
+        "prevista na emissão, por isso os segmentos são conhecidos de antemão.\n\n"
+        + analise.markdown(segmentos)
+    )
+    (config.ARTEFACTOS / "analise.md").write_text(texto_analise + "\n", encoding="utf-8")
+    _resumo_github("## Análise por segmento\n\n" + texto_analise)
     if args.atualizar_readme:
         readme = config.RAIZ / "README.md"
         texto = readme.read_text(encoding="utf-8")
-        novo = re.sub(
-            r"(<!-- RESULTADOS:INICIO -->\n).*?(\n<!-- RESULTADOS:FIM -->)",
-            lambda m: m.group(1) + tabela + m.group(2),
-            texto,
-            flags=re.S,
-        )
-        readme.write_text(novo, encoding="utf-8")
+        texto = _substituir_bloco(texto, "RESULTADOS", tabela)
+        texto = _substituir_bloco(texto, "ANALISE", texto_analise)
+        readme.write_text(texto, encoding="utf-8")
     return 0
+
+
+def _substituir_bloco(texto: str, nome: str, conteudo: str) -> str:
+    padrao = rf"(<!-- {nome}:INICIO -->\n).*?(\n<!-- {nome}:FIM -->)"
+    if not re.search(padrao, texto, flags=re.S):
+        raise ValueError(f"README sem os marcadores {nome}:INICIO/FIM")
+    return re.sub(padrao, lambda m: m.group(1) + conteudo + m.group(2), texto, flags=re.S)
 
 
 def cmd_treinar(args) -> int:
@@ -175,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     s.set_defaults(func=cmd_ingest)
 
     s = sub.add_parser("backtest", help="backtest semana a semana contra as referências")
-    s.add_argument("--semanas", type=int, default=26)
+    s.add_argument("--semanas", type=int, default=52)
     s.add_argument("--atualizar-readme", action="store_true")
     s.set_defaults(func=cmd_backtest)
 

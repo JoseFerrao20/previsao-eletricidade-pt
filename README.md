@@ -155,13 +155,19 @@ Backtest semana a semana: 26 semanas de teste, de 2026-05-04 a 2026-11-01; horiz
 - De D para D+1 o erro sobe 8 a 17 %, em linha com a meteorologia mais
   antiga (previsão de 3 dias antes em vez de 2).
 
+### Onde o modelo ganha
+
+<!-- ANALISE:INICIO -->
+*Ainda sem análise por segmento: é gerada pelo próximo `retreino`.*
+<!-- ANALISE:FIM -->
+
 ## 5. MLOps
 
 | Workflow | Quando | O que faz |
 |----------|--------|-----------|
 | `ci` | cada *push* / PR | `ruff` + `pytest` no ambiente do `uv.lock`. |
 | `diario` | todos os dias, 01:10 UTC | Ingestão incremental (REN + Open-Meteo), previsão a 48 h com o campeão, monitor, painel no GitHub Pages. Se o monitor der alerta, abre/atualiza uma *issue* `alerta-modelo` e dispara o `retreino`. |
-| `retreino` | domingos + a pedido do monitor | Backtest de 26 semanas (atualiza a tabela deste README), treina candidatos e aplica a regra de promoção. |
+| `retreino` | domingos + a pedido do monitor | Backtest de 52 semanas (atualiza as tabelas de resultados e de análise deste README), treina candidatos e aplica a regra de promoção. |
 
 **Registo de modelos** (`src/eletricidade/registo.py`): cada versão guarda o
 modelo e um `meta.json` com o período de treino, hiperparâmetros, *seed*,
@@ -244,7 +250,7 @@ Conhecidas à partida:
 uv sync --frozen             # ambiente exatamente igual ao do lock
 uv run pytest                # testes (fixtures sintéticas, sem rede)
 uv run eletricidade ingest   # download incremental desde 2024-01-01
-uv run eletricidade backtest --semanas 26
+uv run eletricidade backtest --semanas 52
 uv run eletricidade treinar
 uv run eletricidade prever
 uv run eletricidade monitorizar
