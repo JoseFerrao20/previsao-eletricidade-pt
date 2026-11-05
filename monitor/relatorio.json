@@ -1,45 +1,51 @@
 {
-  "gerado_em": "2026-11-04T18:59:57+00:00",
+  "gerado_em": "2026-11-05T07:55:27+00:00",
   "alvos": {
     "consumo": {
       "versao": "20261104T1857-dc8b25a",
-      "n_horas": 0,
-      "nota": "menos de 24 horas com valores reais na janela",
+      "n_horas": 24,
+      "MAE_realizado": 128.94101735439622,
+      "MAE_naive_sazonal": 271.26875,
+      "MAE_referencia": 152.1594210880966,
       "psi": {
-        "populacao__temperature_2m": 0.701,
-        "populacao__cloud_cover": 1.063,
-        "populacao__shortwave_radiation": 0.072
+        "populacao__temperature_2m": 0.772,
+        "populacao__cloud_cover": 1.115,
+        "populacao__shortwave_radiation": 0.066
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.70)",
-        "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 1.06)"
+        "meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.77)",
+        "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 1.11)"
       ],
       "sinais": []
     },
     "eolica": {
       "versao": "20261104T1857-dc8b25a",
-      "n_horas": 0,
-      "nota": "menos de 24 horas com valores reais na janela",
+      "n_horas": 24,
+      "MAE_realizado": 436.3725301044653,
+      "MAE_naive_sazonal": 1038.48125,
+      "MAE_referencia": 406.0567608462779,
       "psi": {
-        "vento__wind_speed_100m": 0.429
+        "vento__wind_speed_100m": 0.612
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.43)"
+        "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.61)"
       ],
       "sinais": []
     },
     "solar": {
       "versao": "20261104T1857-dc8b25a",
-      "n_horas": 0,
-      "nota": "menos de 24 horas com valores reais na janela",
+      "n_horas": 24,
+      "MAE_realizado": 83.15955601701694,
+      "MAE_naive_sazonal": 87.5270833333334,
+      "MAE_referencia": 137.1998292323054,
       "psi": {
-        "sol__shortwave_radiation": 0.079,
-        "sol__cloud_cover": 1.503,
-        "sol__temperature_2m": 0.526
+        "sol__shortwave_radiation": 0.073,
+        "sol__cloud_cover": 1.467,
+        "sol__temperature_2m": 0.481
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 1.50)",
-        "meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 0.53)"
+        "meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 1.47)",
+        "meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 0.48)"
       ],
       "sinais": []
     }
