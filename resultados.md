@@ -1,16 +1,16 @@
-Backtest semana a semana: 26 semanas de teste, de 2026-05-04 a 2026-11-01; horizontes D e D+1 agregados. MAPE e sMAPE do solar só nas horas com mais de 100 MW.
+Backtest semana a semana: 52 semanas de teste, de 2025-11-03 a 2026-11-01; horizontes D e D+1 agregados. MAPE e sMAPE do solar só nas horas com mais de 100 MW.
 
 | Alvo | Modelo | MAE (MW) | MAPE | sMAPE | Skill vs. naive sazonal |
 |------|--------|---------:|-----:|------:|------------------------:|
-| consumo | **LightGBM** | 189 | 3.2% | 3.2% | +35.9% |
-| consumo | Naive sazonal (7 dias) | 295 | 4.9% | 5.0% | +0.0% |
-| consumo | Média da semana anterior | 422 | 7.3% | 7.1% | -43.2% |
-| consumo | Persistência (D-1) | 508 | 8.7% | 8.6% | -72.2% |
-| eolica | **LightGBM** | 420 | 83.2% | 48.1% | +48.5% |
-| eolica | Naive sazonal (7 dias) | 814 | 153.8% | 75.0% | +0.0% |
-| eolica | Média da semana anterior | 636 | 126.3% | 62.0% | +21.9% |
-| eolica | Persistência (D-1) | 662 | 107.5% | 64.0% | +18.7% |
-| solar | **LightGBM** | 149 | 17.6% | 16.9% | +33.2% |
-| solar | Naive sazonal (7 dias) | 223 | 27.2% | 24.7% | +0.0% |
-| solar | Média da semana anterior | 185 | 21.9% | 19.2% | +17.1% |
-| solar | Persistência (D-1) | 193 | 21.8% | 20.2% | +13.2% |
+| consumo | **LightGBM** | 230 | 3.7% | 3.7% | +34.5% |
+| consumo | Naive sazonal (7 dias) | 351 | 5.6% | 5.5% | +0.0% |
+| consumo | Média da semana anterior | 469 | 7.7% | 7.5% | -33.7% |
+| consumo | Persistência (D-1) | 556 | 9.1% | 9.0% | -58.6% |
+| eolica | **LightGBM** | 542 | 102.5% | 47.9% | +51.2% |
+| eolica | Naive sazonal (7 dias) | 1111 | 212.9% | 79.0% | +0.0% |
+| eolica | Média da semana anterior | 854 | 192.6% | 63.9% | +23.1% |
+| eolica | Persistência (D-1) | 920 | 176.1% | 68.3% | +17.1% |
+| solar | **LightGBM** | 132 | 24.2% | 21.7% | +39.6% |
+| solar | Naive sazonal (7 dias) | 219 | 43.9% | 37.1% | +0.0% |
+| solar | Média da semana anterior | 175 | 34.8% | 27.7% | +20.1% |
+| solar | Persistência (D-1) | 189 | 36.6% | 31.0% | +13.8% |
