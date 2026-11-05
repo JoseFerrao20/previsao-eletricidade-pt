@@ -130,30 +130,25 @@ Backtest semana a semana: 52 semanas de teste, de 2025-11-03 a 2026-11-01; horiz
 | solar | Persistência (D-1) | 189 | 36.6% | 31.0% | +13.8% |
 <!-- RESULTADOS:FIM -->
 
-**Leitura** (primeiro backtest real: 26 semanas, de maio a novembro de 2026,
-4368 horas por alvo e horizonte):
+**Leitura** (backtest de 2026-11-05: 52 semanas, de novembro de 2025 a
+novembro de 2026, 8728 previsões por alvo e horizonte):
 
 | Alvo | MAE LightGBM, D / D+1 | Melhor modelo simples (MAE) | Skill vs. melhor simples |
 |------|----------------------:|-----------------------------|-------------------------:|
-| consumo | 174 / 204 MW | naive sazonal (295) | +36 % |
-| eolica | 400 / 440 MW | média da semana anterior (636) | +34 % |
-| solar | 142 / 156 MW | média da semana anterior (185) | +19 % |
+| consumo | 215 / 244 MW | naive sazonal (351) | +35 % |
+| eolica | 518 / 566 MW | média da semana anterior (854) | +37 % |
+| solar | 126 / 139 MW | média da semana anterior (175) | +25 % |
 
-- **Consumo:** o MAPE de 3,2 % é o resultado mais sólido. O naive sazonal
-  já capta bem o padrão semanal, e mesmo assim o modelo reduz o erro em
-  36 %. A persistência (D-1) é a pior referência, sobretudo em D+1
-  (624 MW), porque ignora o fim de semana. Ainda não há análise de onde vem o
-  ganho (feriados, temperatura): fica como próximo passo.
-- **Eólica:** é onde o modelo mais ganha, porque o vento previsto é
-  informação que nenhum modelo simples tem. O MAPE (80 %+) é enganador: há
-  muitas horas com pouca produção, onde o erro relativo explode. Para a eólica,
-  o MAE é a métrica que conta.
-- **Solar:** o ganho é o mais pequeno. Uma explicação plausível, ainda por
-  confirmar: em dias de céu limpo o dia anterior já é uma boa previsão, e a
-  radiação prevista só acrescenta nos dias com nuvens. O período de teste
-  (maio a novembro) não inclui o inverno.
-- De D para D+1 o erro sobe 8 a 17 %, em linha com a meteorologia mais
-  antiga (previsão de 3 dias antes em vez de 2).
+- **Consumo:** MAPE de 3,7 % num ano inteiro. O naive sazonal é a referência
+  mais forte, porque já capta o padrão semanal; a persistência (D-1) é a pior,
+  sobretudo em D+1 (679 MW), porque ignora o fim de semana.
+- **Eólica:** o vento previsto é informação que nenhum modelo simples tem. O
+  MAPE (~100 %) é enganador: há muitas horas com pouca produção, onde o erro
+  relativo explode. Para a eólica, o MAE é a métrica que conta.
+- **Solar:** o MAPE subiu de 17 % (só maio a novembro) para 24 % com o
+  inverno incluído: os dias de inverno produzem pouco, e o erro relativo pesa mais.
+- De D para D+1 o erro sobe 9 a 13 %, coerente com a meteorologia mais antiga
+  (previsão feita 3 dias antes em vez de 2).
 
 ### Onde o modelo ganha
 
@@ -211,6 +206,30 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Nebulosidade prevista (horas de sol) | ≥ 60 % | 3 351 | 290 | 496 | 385 (média sem.) | +25% |
 <!-- ANALISE:FIM -->
 
+**O que a análise mostra** (mesmo backtest de 2026-11-05):
+
+- **Feriados:** é onde o consumo mais ganha (+69 %: 217 vs. 689 MW). O naive
+  usa o mesmo dia da semana anterior, que foi dia útil; o modelo sabe que é
+  feriado. As pontes são poucas (144 previsões, cerca de 3 dias), por isso o
+  +17 % aí vale pouco como evidência.
+- **Inverno e frio:** é a época mais difícil para o consumo (MAE 355 MW, contra
+  180 a 205 MW nas outras estações). Abaixo de 10 °C previstos o ganho cai
+  para +25 %, e acima de 28 °C sobe para +45 %. O aquecimento parece mais
+  difícil de prever do que o arrefecimento. É o primeiro sítio onde procurar
+  melhorias.
+- **Eólica:** ganha entre +31 % e +42 % em todas as estações, e mais (+60 % a
+  +68 %) quando o vento previsto é forte, onde as referências falham mais. Nos
+  feriados o ganho é só de +12 %, com uma amostra curta (cerca de 13 dias).
+- **Solar:** a hipótese anterior (o modelo só ajudaria com nuvens) **não se
+  confirma**. O ganho é parecido com céu limpo (+27 %) e muito nublado
+  (+25 %), e é menor com nuvens parciais (+18 %), que são o caso mais difícil.
+  Por estação, ganha mais no inverno (+31 %) do que na primavera e no verão
+  (+19 a 21 %).
+- **Por confirmar:** em 60 % das horas, o vento previsto nos 3 pontos de
+  vento fica abaixo de 4 m/s a 100 m. É pouco para zonas de parques eólicos.
+  As unidades estão certas (m/s, pedidas explicitamente), mas os pontos podem
+  não representar bem onde está a potência instalada.
+
 ## 5. MLOps
 
 | Workflow | Quando | O que faz |
@@ -263,9 +282,9 @@ Open-Meteo ficam na *cache* do Actions e são reconstruíveis.
 
 Observadas nas primeiras execuções reais:
 
-- O backtest de 26 semanas cobre de maio a novembro: ainda não há avaliação
-  num inverno inteiro, que é a época mais difícil para o consumo (frio) e para
-  a solar (nuvens).
+- Há só um inverno no backtest (2025/26) e só dois anos de histórico. As
+  métricas por segmento pequeno (pontes, feriados, vento ≥ 12 m/s) têm
+  poucas centenas de previsões e devem ser lidas com cautela.
 - O gateway da REN não responde se o pedido tiver `Accept: application/json`
   (fica pendurado até ao timeout). É um comportamento sem documentação, que
   pode mudar. O workflow `diagnostico-rede` serve para o voltar a verificar.
