@@ -127,6 +127,13 @@ REGRA_METEO = os.environ.get("ELETRICIDADE_REGRA_METEO", "fresca")
 # globais publicam 3–6 h depois do início; 8 h deixa folga para o processamento.
 ATRASO_PUBLICACAO_METEO_H = 8
 
+# Modelos meteorológicos extra (além do de omissão), pedidos só para uma variável por
+# grupo de pontos. Vazio desliga (ELETRICIDADE_MODELOS_METEO="").
+_modelos = os.environ.get("ELETRICIDADE_MODELOS_METEO", "ecmwf_ifs025,gfs_seamless,icon_seamless")
+MODELOS_METEO_EXTRA = tuple(m for m in _modelos.split(",") if m)
+VARIAVEL_EXTRA_POR_GRUPO = {VENTO: "wind_speed_100m", SOL: "shortwave_radiation", POP: "temperature_2m"}
+GRUPO_EXTRA_POR_ALVO = {"eolica": VENTO, "solar": SOL, "consumo": POP}
+
 # Horizonte: a previsão emitida à meia-noite local de D cobre D (lead 1) e D+1 (lead 2).
 DIAS_HORIZONTE = 2
 

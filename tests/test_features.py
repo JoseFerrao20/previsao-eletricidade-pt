@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -215,3 +217,45 @@ def test_regra_fresca_por_hora(monkeypatch):
     assert (lead1.loc[hora[lead1.index] > limite, "valor"] == k + 2).all()
     lead2 = d[d["lead_dias"] == 2]
     assert set(lead2["valor"]) == {k + 2, k + 3}
+
+
+def _payload_extra(grupo: str, inicio: str, fim: str) -> list[dict]:
+    from eletricidade import meteo_modelos
+
+    horas = pd.date_range(inicio, pd.Timestamp(fim) + pd.Timedelta(hours=23), freq="1h")
+    var = config.VARIAVEL_EXTRA_POR_GRUPO[grupo]
+    locais = []
+    for _ in meteo_modelos.pontos_do_grupo(grupo):
+        h = {"time": [t.strftime("%Y-%m-%dT%H:%M") for t in horas]}
+        for j, m in enumerate(config.MODELOS_METEO_EXTRA):
+            for n in meteo.OFFSETS_PEDIDOS:
+                h[f"{var}_previous_day{n}_{m}"] = [10.0 * (j + 1) + n] * len(horas)
+        locais.append({"hourly": h})
+    return locais
+
+
+def test_modelos_extra_colunas_e_dispersao(horario_sintetico, monkeypatch, tmp_path):
+    from eletricidade import meteo_modelos
+
+    monkeypatch.setattr(config, "REGRA_METEO", "conservadora")
+    for grupo in config.VARIAVEL_EXTRA_POR_GRUPO:
+        d = tmp_path / grupo
+        d.mkdir()
+        (d / "2024-01.json").write_text(json.dumps(_payload_extra(grupo, "2024-01-01", "2024-03-01")))
+    extra = meteo_modelos.construir_horario(tmp_path)
+    base = meteo.interpretar(payload_meteo("2024-01-01", "2024-03-01"))
+    largo = meteo_modelos.com_dispersao(meteo.agregar_por_grupo(pd.concat([base, extra], ignore_index=True)))
+    cols = meteo_modelos.colunas_para("eolica")
+    assert set(cols) <= set(largo.columns)
+    # lead 1 (conservadora) usa previous_day2: modelo j vale 10(j+1)+2
+    l1 = largo.xs(1, level="lead_dias")
+    m0 = config.MODELOS_METEO_EXTRA[0]
+    assert l1[f"vento__wind_speed_100m__{m0}"].iloc[0] == pytest.approx(12)
+    assert (l1["vento__wind_speed_100m__dispersao"] > 0).all()
+    grade = features.para_grade_local(horario_sintetico)
+    ex = features.construir_exemplos(grade, largo, "eolica")
+    assert set(cols) <= set(ex.columns)
+    # não entram no drift (são muitas e já resumidas pelas médias de grupo)
+    from eletricidade import monitor
+
+    assert not [c for c in monitor.colunas_drift(ex) if c.count("__") > 1]
