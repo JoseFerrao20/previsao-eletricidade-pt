@@ -127,6 +127,12 @@ REGRA_METEO = os.environ.get("ELETRICIDADE_REGRA_METEO", "fresca")
 # globais publicam 3–6 h depois do início; 8 h deixa folga para o processamento.
 ATRASO_PUBLICACAO_METEO_H = 8
 
+# Alvos previstos como fração de um proxy da potência instalada (máximo dos últimos
+# JANELA_CAPACIDADE_DIAS dias): a potência cresce e o passado subestimaria o futuro.
+_normalizados = os.environ.get("ELETRICIDADE_ALVOS_NORMALIZADOS", "eolica,solar")
+ALVOS_NORMALIZADOS = tuple(a for a in _normalizados.split(",") if a)
+JANELA_CAPACIDADE_DIAS = 90
+
 # Horizonte: a previsão emitida à meia-noite local de D cobre D (lead 1) e D+1 (lead 2).
 DIAS_HORIZONTE = 2
 

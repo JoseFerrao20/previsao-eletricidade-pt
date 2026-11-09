@@ -87,3 +87,34 @@ def test_intervalo_nao_altera_a_previsao_central(horario_sintetico):
     np.testing.assert_allclose(
         sem.prever(primeira), com[com["semana"] == com["semana"].min()]["lightgbm"].to_numpy()
     )
+
+
+def test_alvo_normalizado_pela_capacidade(horario_sintetico, monkeypatch):
+    from eletricidade import config
+    from eletricidade.modelos import ModeloLGBM
+
+    grade = features.para_grade_local(horario_sintetico)
+    ex = features.construir_exemplos(grade, None, "eolica")
+    assert "capacidade" in ex and "capacidade" not in features.construir_exemplos(grade, None, "consumo")
+    # a capacidade só usa dias até D-1: mudar o próprio dia não a altera
+    dia = ex["dia"].iloc[len(ex) // 2]
+    alterada = grade.copy()
+    alterada.loc[alterada.index.get_level_values("dia") == dia.date(), "eolica"] = 1e9
+    ex2 = features.construir_exemplos(alterada, None, "eolica")
+    sel = (ex["dia"] == dia) & (ex["lead"] == 1)
+    np.testing.assert_allclose(
+        ex.loc[sel, "capacidade"], ex2.loc[(ex2["dia"] == dia) & (ex2["lead"] == 1), "capacidade"]
+    )
+
+    treino = ex[ex["dia"] < dia]
+    m = ModeloLGBM("eolica").treinar(treino)
+    assert m.normalizado
+    teste = ex[(ex["dia"] >= dia) & ex["y"].notna()].head(200)
+    p = m.prever(teste)
+    assert np.isfinite(p).all() and (p >= 0).all()
+    # um modelo guardado antes desta mudança (sem o atributo) não é reescalado
+    antigo = ModeloLGBM("eolica")
+    monkeypatch.setattr(config, "ALVOS_NORMALIZADOS", ())
+    antigo.treinar(treino.drop(columns="capacidade"))
+    del antigo.__dict__["normalizado"]
+    assert not antigo.normalizado and np.isfinite(antigo.prever(teste.drop(columns="capacidade"))).all()

@@ -61,8 +61,15 @@ def features_historicas(
     media7 = sum(m.shift(lead + i) for i in range(7)) / 7  # D-7..D-1
     max30 = pd.concat([m.shift(lead + i) for i in range(30)]).groupby(level=0).max()
     nivel = m.mean(axis=1).shift(lead)  # média diária de D-1
+    extras = []
+    if alvo in config.ALVOS_NORMALIZADOS:
+        # Proxy da potência instalada: máximo horário dos 90 dias até D-1 (conhecido na emissão).
+        maximo_dia = m.max(axis=1)
+        capacidade = maximo_dia.shift(lead).rolling(config.JANELA_CAPACIDADE_DIAS, min_periods=30).max()
+        extras.append(_empilhar(pd.DataFrame({h: capacidade for h in m.columns}), "capacidade"))
     tabela = pd.concat(
         [
+            *extras,
             _empilhar(ultimo, "persistencia"),
             _empilhar(lag7, "naive_sazonal"),
             _empilhar(media7, "media_semana"),
