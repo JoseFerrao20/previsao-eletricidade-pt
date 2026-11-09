@@ -114,7 +114,10 @@ def cmd_backtest(args) -> int:
     (config.ARTEFACTOS / "resultados.md").write_text(tabela + "\n", encoding="utf-8")
     print(tabela)
     _resumo_github(tabela)
-    previsoes = intervalos.calibrar_backtest(previsoes)
+    estatico = intervalos.calibrar_backtest(previsoes, adaptativo=False)
+    previsoes = intervalos.calibrar_backtest(previsoes)  # adaptativo (ACI): o usado em produção
+    previsoes["lightgbm_p10e"] = estatico["lightgbm_p10c"].to_numpy()
+    previsoes["lightgbm_p90e"] = estatico["lightgbm_p90c"].to_numpy()
     previsoes.to_parquet(config.ARTEFACTOS / "backtest_previsoes.parquet", index=False)
     intervalos.ajustes_producao(previsoes).to_csv(
         config.ARTEFACTOS / "backtest_calibracao_intervalos.csv", index=False
@@ -125,9 +128,11 @@ def cmd_backtest(args) -> int:
         f"Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas {semanas.nunique()} semanas, "
         f"menos as {intervalos.MIN_SEMANAS} primeiras (precisam de erros passados para calibrar). "
         "Um intervalo bem calibrado contém o valor real em ~80 % das horas, com ~10 % de cada lado; "
-        "entre intervalos calibrados, o mais estreito é melhor (menor pinball). *Calibrado*: "
+        "entre intervalos calibrados, o mais estreito é melhor (menor pinball). *Estática*: "
         f"cada limite deslocado pelo quantil 90 % dos erros das {intervalos.JANELA_SEMANAS} semanas "
-        "anteriores, por alvo, horizonte e hora (calibração conformal).\n\n"
+        "anteriores, por alvo, horizonte e hora (calibração conformal). *Adaptativa* (a usada em "
+        "produção): o nível desse quantil é corrigido semana a semana pela taxa de falhas de cada "
+        f"lado na semana anterior (ACI, passo {intervalos.GAMA}).\n\n"
         + backtest.tabela_intervalos_markdown(resumo_int)
     )
     (config.ARTEFACTOS / "intervalos.md").write_text(texto_intervalos + "\n", encoding="utf-8")

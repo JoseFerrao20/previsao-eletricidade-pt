@@ -46,7 +46,7 @@ def test_calibracao_nao_usa_a_propria_semana():
 
 def test_resumo_compara_nas_mesmas_linhas():
     t = backtest.resumir_intervalos(intervalos.calibrar_backtest(_previsoes()))
-    assert set(t["modelo"]) == {"lightgbm", "lightgbm_calibrado", "naive_empirico"}
+    assert {"lightgbm", "lightgbm_calibrado", "naive_empirico"} <= set(t["modelo"])
     assert t["n"].nunique() == 1
 
 
@@ -62,3 +62,42 @@ def test_producao_aplica_a_calibracao_do_ultimo_backtest(tmp_path):
     assert cal["intervalo_calibrado"].all()
     assert (cal["p10"] < 4950).all() and (cal["p90"] > 5050).all()
     assert not producao.calibrar_intervalos(prev, pasta=tmp_path / "nada")["intervalo_calibrado"].any()
+
+
+def _previsoes_com_mudanca(n_semanas=30, seed=1):
+    """O erro real duplica a meio: a calibração estática fica para trás, a adaptativa acompanha."""
+    df = _previsoes(n_semanas=n_semanas, seed=seed)
+    rng = np.random.default_rng(seed + 1)
+    meio = df["semana"] >= df["semana"].min() + pd.Timedelta(weeks=n_semanas // 2)
+    df.loc[meio, "y"] = 5000 + rng.normal(0, 250, meio.sum())
+    return df
+
+
+def test_aci_recupera_cobertura_depois_de_uma_mudanca():
+    df = _previsoes_com_mudanca()
+    est = intervalos.calibrar_backtest(df, adaptativo=False)
+    aci = intervalos.calibrar_backtest(df, adaptativo=True)
+    fim = df["semana"] >= df["semana"].max() - pd.Timedelta(weeks=9)  # semanas depois da mudança
+
+    def cobertura(t):
+        t = t[fim]
+        return ((t["y"] >= t["lightgbm_p10c"]) & (t["y"] <= t["lightgbm_p90c"])).mean()
+
+    assert abs(cobertura(aci) - 0.8) < abs(cobertura(est) - 0.8)
+    assert aci.attrs["niveis"] and all(0.5 <= v["alto"] <= 0.995 for v in aci.attrs["niveis"].values())
+
+
+def test_aci_nao_usa_a_propria_semana():
+    df = _previsoes_com_mudanca()
+    ultima = df["semana"] == df["semana"].max()
+    alterado = df.copy()
+    alterado.loc[ultima, "y"] += 10_000
+    a = intervalos.calibrar_backtest(df).loc[ultima, "lightgbm_p90c"]
+    b = intervalos.calibrar_backtest(alterado).loc[ultima, "lightgbm_p90c"]
+    np.testing.assert_allclose(a, b)
+
+
+def test_producao_recebe_os_niveis_finais():
+    aci = intervalos.calibrar_backtest(_previsoes_com_mudanca())
+    tabela = intervalos.ajustes_producao(aci)
+    assert {"nivel_baixo", "nivel_alto"} <= set(tabela.columns)

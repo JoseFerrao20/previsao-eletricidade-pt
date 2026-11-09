@@ -114,6 +114,8 @@ def resumir_intervalos(previsoes: pd.DataFrame) -> pd.DataFrame:
         if "lightgbm_p10c" in g:
             ok &= g["lightgbm_p10c"].notna().to_numpy()
         candidatos = {"lightgbm": (g["lightgbm_p10"], g["lightgbm_p90"]), "naive_empirico": (nb, na)}
+        if "lightgbm_p10e" in g:
+            candidatos["lightgbm_estatico"] = (g["lightgbm_p10e"], g["lightgbm_p90e"])
         if "lightgbm_p10c" in g:
             candidatos["lightgbm_calibrado"] = (g["lightgbm_p10c"], g["lightgbm_p90c"])
         for nome, (b, a) in candidatos.items():
@@ -142,7 +144,8 @@ def _intervalo_naive_empirico(g: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
 def tabela_intervalos_markdown(t: pd.DataFrame) -> str:
     nomes = {
         "lightgbm": "LightGBM (quantis, sem calibrar)",
-        "lightgbm_calibrado": "**LightGBM calibrado**",
+        "lightgbm_estatico": "LightGBM, calibração estática",
+        "lightgbm_calibrado": "**LightGBM, calibração adaptativa**",
         "naive_empirico": "Naive ± erros passados",
     }
     linhas = [
