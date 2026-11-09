@@ -1,10 +1,18 @@
 name: diario
 
 # Ingestão incremental, previsão a 48 h, monitor (alertas + pedido de retreino) e painel.
-# 01:10 UTC = 01:10 (inverno) ou 02:10 (verão) em Lisboa: o dia anterior já está fechado.
+#
+# O agendamento do GitHub Actions não é pontual: o cron das 01:10 UTC chegou a
+# arrancar às 07:54. Por isso há várias tentativas na madrugada (minutos fora da
+# hora certa, que são os mais congestionados). A primeira a correr emite a previsão;
+# as seguintes só atualizam dados, monitor e painel (a previsão não é reemitida).
+# Todas depois da meia-noite de Lisboa (UTC+0 no inverno, UTC+1 no verão).
 on:
   schedule:
-    - cron: "10 1 * * *"
+    - cron: "23 0 * * *"
+    - cron: "47 1 * * *"
+    - cron: "13 3 * * *"
+    - cron: "41 5 * * *"
   workflow_dispatch:
 
 concurrency:

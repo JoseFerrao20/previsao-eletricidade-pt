@@ -160,8 +160,36 @@ def avaliar(
     return relatorio
 
 
+def atrasos_emissao(previsoes: pd.DataFrame, dias: int = 7) -> dict:
+    """Atraso (h) entre a meia-noite de Lisboa e a emissão real, nas últimas origens."""
+    if previsoes.empty or "emitida_em" not in previsoes:
+        return {}
+    por_origem = previsoes.dropna(subset=["emitida_em"]).groupby("origem")["emitida_em"].first()
+    if por_origem.empty:
+        return {}
+    meia_noite = pd.DatetimeIndex(por_origem.index).tz_localize(config.FUSO)
+    horas = (
+        pd.DatetimeIndex(pd.to_datetime(por_origem.to_numpy(), utc=True)) - meia_noite
+    ).total_seconds() / 3600
+    horas = pd.Series(horas, index=por_origem.index).sort_index().tail(dias)
+    return {
+        "ultima_origem": f"{horas.index[-1]:%Y-%m-%d}",
+        "atraso_ultima_h": round(float(horas.iloc[-1]), 1),
+        "atraso_mediano_h": round(float(horas.median()), 1),
+        "atraso_maximo_h": round(float(horas.max()), 1),
+        "origens": len(horas),
+    }
+
+
 def markdown(relatorio: dict) -> str:
     linhas = [f"Relatório do monitor ({relatorio['gerado_em']})", ""]
+    if e := relatorio.get("emissao"):
+        linhas += [
+            f"Emissão: a previsão de {e['ultima_origem']} saiu {e['atraso_ultima_h']} h depois da "
+            f"meia-noite; nas últimas {e['origens']} origens, mediana {e['atraso_mediano_h']} h e "
+            f"máximo {e['atraso_maximo_h']} h.",
+            "",
+        ]
     for alvo, info in relatorio["alvos"].items():
         estado = "⚠️" if info["sinais"] else "✅"
         linhas.append(f"### {estado} {alvo} (modelo {info.get('versao')})")

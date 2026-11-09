@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import config
+from .producao import atraso_emissao_horas
 
 NOMES = {"consumo": "Consumo", "eolica": "Eólica", "solar": "Solar"}
 
@@ -60,6 +61,10 @@ def dados_painel(
                 "y": serie["naive_sazonal"].round(1).tolist(),
             }
             bloco["ultima_origem"] = f"{ultima_origem:%Y-%m-%d}"
+            if "emitida_em" in ultima and ultima["emitida_em"].notna().any():
+                emitida = pd.Timestamp(ultima["emitida_em"].dropna().iloc[0]).tz_convert(config.FUSO)
+                bloco["emitida_em"] = f"{emitida:%d/%m %H:%M}"
+                bloco["atraso_horas"] = round(atraso_emissao_horas(ultima), 1)
             bloco["versao"] = str(ultima["versao"].iloc[0]) if not ultima.empty else None
         if not hist_erro.empty:
             h = hist_erro[(hist_erro["alvo"] == alvo) & (hist_erro["lead"] == 1)]

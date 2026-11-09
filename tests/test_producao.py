@@ -142,3 +142,34 @@ def test_drift_e_aviso_e_nao_dispara_retreino():
     info = rel["alvos"]["eolica"]
     assert info["avisos"] and not info["sinais"]
     assert not rel["alerta"] and not rel["retreinar"]
+
+
+def test_primeira_emissao_e_a_que_conta(estado, horario_sintetico, monkeypatch):
+    """O CLI não reemite uma previsão já guardada (salvo --forcar) e regista a hora de emissão."""
+    from argparse import Namespace
+
+    from eletricidade import cli
+
+    grade = features.para_grade_local(horario_sintetico)
+    passado = grade[pd.to_datetime(grade.index.get_level_values("dia")) < pd.Timestamp("2025-04-01")]
+    for alvo in config.ALVOS:
+        r = producao.treinar_e_promover(
+            alvo, features.construir_exemplos(passado, None, alvo), semanas_gate=2
+        )
+        if not r["promovido"]:
+            registo.promover(alvo, r["versao"], "teste")
+    monkeypatch.setattr(producao, "carregar_grade", lambda: grade)
+    monkeypatch.setattr(producao, "carregar_meteo", lambda: None)
+
+    args = Namespace(origem="2025-04-01", forcar=False)
+    assert cli.cmd_prever(args) == 0
+    destino = producao.caminho_previsao(pd.Timestamp("2025-04-01"))
+    primeira = pd.read_parquet(destino)
+    assert primeira["emitida_em"].notna().all()
+    assert cli.cmd_prever(args) == 0  # segunda vez: não reescreve
+    pd.testing.assert_frame_equal(pd.read_parquet(destino), primeira)
+    assert cli.cmd_prever(Namespace(origem="2025-04-01", forcar=True)) == 0
+    assert pd.read_parquet(destino)["emitida_em"].iloc[0] >= primeira["emitida_em"].iloc[0]
+
+    atrasos = monitor.atrasos_emissao(monitor.carregar_previsoes())
+    assert atrasos["ultima_origem"] == "2025-04-01" and atrasos["atraso_ultima_h"] > 24 * 300

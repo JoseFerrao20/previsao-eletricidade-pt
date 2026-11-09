@@ -123,7 +123,13 @@ def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = No
         for nome in REFERENCIAS:
             bloco[nome] = ex[REFERENCIAS[nome]].to_numpy()
         partes.append(bloco)
-    return pd.concat(partes, ignore_index=True)
+    saida = pd.concat(partes, ignore_index=True)
+    saida["emitida_em"] = pd.Timestamp.now(tz="UTC")
+    return saida
+
+
+def caminho_previsao(origem: pd.Timestamp, pasta: Path | None = None) -> Path:
+    return (pasta or config.DIR_PREVISOES) / f"{pd.Timestamp(origem):%Y-%m-%d}.parquet"
 
 
 FICH_CALIBRACAO = "backtest_calibracao_intervalos.csv"
@@ -145,8 +151,16 @@ def calibrar_intervalos(previsao: pd.DataFrame, pasta: Path | None = None) -> pd
 
 
 def guardar_previsao(previsao: pd.DataFrame, pasta: Path | None = None) -> Path:
-    pasta = pasta or config.DIR_PREVISOES
-    pasta.mkdir(parents=True, exist_ok=True)
-    destino = pasta / f"{previsao['origem'].iloc[0]:%Y-%m-%d}.parquet"
+    destino = caminho_previsao(previsao["origem"].iloc[0], pasta)
+    destino.parent.mkdir(parents=True, exist_ok=True)
     previsao.to_parquet(destino, index=False)
     return destino
+
+
+def atraso_emissao_horas(previsao: pd.DataFrame) -> float:
+    """Horas entre a meia-noite de Lisboa da origem e o momento real da emissão."""
+    if "emitida_em" not in previsao or previsao["emitida_em"].isna().all():
+        return float("nan")
+    meia_noite = pd.Timestamp(previsao["origem"].iloc[0]).tz_localize(config.FUSO)
+    emitida = pd.Timestamp(previsao["emitida_em"].iloc[0])
+    return (emitida - meia_noite).total_seconds() / 3600
