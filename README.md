@@ -282,6 +282,12 @@ Melhora em todas as estações e faixas de temperatura. O inverno continua a ser
 época mais difícil. Nos feriados e nas pontes piora ligeiramente, mas as
 amostras são pequenas.
 
+### Intervalos de previsão
+
+<!-- INTERVALOS:INICIO -->
+*Ainda sem resultados: gerados pelo próximo `retreino`.*
+<!-- INTERVALOS:FIM -->
+
 ## 5. MLOps
 
 | Workflow | Quando | O que faz |

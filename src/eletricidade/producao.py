@@ -116,6 +116,10 @@ def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = No
         bloco["alvo"] = alvo
         bloco["versao"] = meta["versao"]
         bloco["previsao"] = modelo.prever(ex)
+        if getattr(modelo, "quantis", None):  # versões anteriores do registo não têm intervalos
+            bloco["p10"], bloco["p90"] = modelo.prever_intervalo(ex)
+        else:
+            bloco["p10"] = bloco["p90"] = float("nan")
         for nome in REFERENCIAS:
             bloco[nome] = ex[REFERENCIAS[nome]].to_numpy()
         partes.append(bloco)

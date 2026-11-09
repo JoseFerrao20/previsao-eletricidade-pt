@@ -1,4 +1,4 @@
-"""Métricas de erro: MAE, MAPE e sMAPE (em %)."""
+"""Métricas de erro: MAE, MAPE e sMAPE (em %); cobertura e pinball loss para intervalos."""
 
 from __future__ import annotations
 
@@ -46,3 +46,30 @@ def smape(y, p, limiar: float | None = None) -> float:
 def todas(y, p, limiar_mape: float = 0.0) -> dict[str, float]:
     limiar_smape = limiar_mape if limiar_mape > 0 else None
     return {"MAE": mae(y, p), "MAPE": mape(y, p, limiar_mape), "sMAPE": smape(y, p, limiar_smape)}
+
+
+def pinball(y, q, alfa: float) -> float:
+    """Perda quantílica média (MW). Minimizada pelo verdadeiro quantil alfa."""
+    y, q = _validos(y, q)
+    if not y.size:
+        return float("nan")
+    d = y - q
+    return float(np.mean(np.maximum(alfa * d, (alfa - 1) * d)))
+
+
+def intervalo(y, baixo, alto, alfas: tuple[float, float]) -> dict[str, float]:
+    """Cobertura (%), largura média (MW) e pinball dos dois limites."""
+    y, baixo, alto = (np.asarray(v, dtype=float) for v in (y, baixo, alto))
+    ok = np.isfinite(y) & np.isfinite(baixo) & np.isfinite(alto)
+    y, baixo, alto = y[ok], baixo[ok], alto[ok]
+    if not y.size:
+        return {"cobertura": float("nan"), "largura": float("nan"), "pinball_baixo": float("nan"),
+                "pinball_alto": float("nan"), "abaixo": float("nan"), "acima": float("nan")}  # fmt: skip
+    return {
+        "cobertura": float(100 * np.mean((y >= baixo) & (y <= alto))),
+        "abaixo": float(100 * np.mean(y < baixo)),
+        "acima": float(100 * np.mean(y > alto)),
+        "largura": float(np.mean(alto - baixo)),
+        "pinball_baixo": pinball(y, baixo, alfas[0]),
+        "pinball_alto": pinball(y, alto, alfas[1]),
+    }

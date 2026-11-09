@@ -47,6 +47,14 @@ def dados_painel(
                 "x": _ts_local(serie["dia"], serie["hora"]),
                 "y": serie["previsao"].round(1).tolist(),
             }
+            if {"p10", "p90"} <= set(serie.columns):
+                banda = serie[serie["origem"] == ultima_origem].dropna(subset=["p10", "p90"])
+                if not banda.empty:
+                    bloco["intervalo"] = {
+                        "x": _ts_local(banda["dia"], banda["hora"]),
+                        "baixo": banda["p10"].round(1).tolist(),
+                        "alto": banda["p90"].round(1).tolist(),
+                    }
             bloco["naive"] = {
                 "x": _ts_local(serie["dia"], serie["hora"]),
                 "y": serie["naive_sazonal"].round(1).tolist(),

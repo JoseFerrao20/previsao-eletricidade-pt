@@ -98,6 +98,16 @@ def cmd_backtest(args) -> int:
     (config.ARTEFACTOS / "resultados.md").write_text(tabela + "\n", encoding="utf-8")
     print(tabela)
     _resumo_github(tabela)
+    intervalos = backtest.resumir_intervalos(previsoes)
+    intervalos.to_csv(config.ARTEFACTOS / "backtest_intervalos.csv", index=False)
+    texto_intervalos = (
+        f"Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas {semanas.nunique()} semanas. "
+        "Um intervalo bem calibrado contém o valor real em ~80 % das horas, com ~10 % de cada lado; "
+        "entre dois intervalos calibrados, o mais estreito é melhor (menor pinball).\n\n"
+        + backtest.tabela_intervalos_markdown(intervalos)
+    )
+    (config.ARTEFACTOS / "intervalos.md").write_text(texto_intervalos + "\n", encoding="utf-8")
+    _resumo_github("## Intervalos de previsão\n\n" + texto_intervalos)
     segmentos = analise.tabela_completa(previsoes, ex)
     segmentos.to_csv(config.ARTEFACTOS / "backtest_segmentos.csv", index=False)
     texto_analise = (
@@ -114,6 +124,7 @@ def cmd_backtest(args) -> int:
         texto = readme.read_text(encoding="utf-8")
         texto = _substituir_bloco(texto, "RESULTADOS", tabela)
         texto = _substituir_bloco(texto, "ANALISE", texto_analise)
+        texto = _substituir_bloco(texto, "INTERVALOS", texto_intervalos)
         readme.write_text(texto, encoding="utf-8")
     return 0
 
