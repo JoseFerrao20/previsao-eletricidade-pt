@@ -249,6 +249,39 @@ Mesmas 52 semanas, mesmas horas (workflow `avaliar`, `main` contra o branch):
 | solar | 132 MW | 120 MW | −9 % |
 | consumo | 230 MW | 230 MW | 0 % (não mudou nada para o consumo) |
 
+Porque é que o vento previsto é tão fraco mesmo nas serras (mediana de 3 a 4 m/s
+no Caramulo, na Freita e no Alvão)? A explicação mais provável é a resolução do
+modelo meteorológico: cada célula da grelha mistura vales e cumeadas, e as
+cumeadas, onde estão os aerogeradores, ficam suavizadas. O nível absoluto sai
+baixo, mas as variações continuam informativas, e o modelo aprende a escala. É
+coerente com o ganho de 34 %.
+
+#### Experiência: frio e inércia térmica no consumo
+
+A análise por segmento apontava o inverno e o frio como o ponto fraco do
+consumo. Juntaram-se features de temperatura ao nível do dia, todas conhecidas na
+emissão:
+- mínima, máxima e média previstas do dia alvo;
+- graus-dia de aquecimento (base 16 °C) e de arrefecimento (base 22 °C);
+- inércia térmica: média e graus-dia de aquecimento dos 3 dias anteriores, da
+  corrida de 2 dias antes. Um teste garante que a inércia não usa a previsão do
+  próprio dia alvo.
+
+Mesmas 52 semanas e mesmas horas:
+
+| Consumo | MAE antes | MAE depois | Variação |
+|---|---:|---:|---:|
+| Total | 230 MW | 207 MW | **−10 %** |
+| Inverno | 355 MW | 324 MW | −9 % |
+| Abaixo de 10 °C | 299 MW | 274 MW | −8 % |
+| Acima de 28 °C | 314 MW | 276 MW | −12 % |
+| Fim de semana | 240 MW | 202 MW | −16 % |
+| Feriados (620 previsões) | 217 MW | 226 MW | +4 % |
+
+Melhora em todas as estações e faixas de temperatura. O inverno continua a ser a
+época mais difícil. Nos feriados e nas pontes piora ligeiramente, mas as
+amostras são pequenas.
+
 ## 5. MLOps
 
 | Workflow | Quando | O que faz |
