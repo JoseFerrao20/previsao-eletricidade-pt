@@ -53,7 +53,7 @@ def colunas_drift(exemplos: pd.DataFrame) -> list[str]:
     return [
         c
         for c in exemplos.columns
-        if "__" in c and not c.startswith(config.PREFIXO_PONTO) and not c.endswith("potencia_proxy")
+        if c.count("__") == 1 and not c.startswith(config.PREFIXO_PONTO) and not c.endswith("potencia_proxy")
     ]
 
 
