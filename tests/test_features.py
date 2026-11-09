@@ -259,3 +259,24 @@ def test_modelos_extra_colunas_e_dispersao(horario_sintetico, monkeypatch, tmp_p
     from eletricidade import monitor
 
     assert not [c for c in monitor.colunas_drift(ex) if c.count("__") > 1]
+
+
+def test_calendario_alargado_do_consumo():
+    dias = pd.Series(
+        pd.to_datetime(["2026-12-24", "2026-12-28", "2026-06-13", "2026-02-17", "2026-04-22", "2026-04-25"])
+    )
+    cal = calendario.features_calendario_consumo(dias)
+    assert cal["periodo_natal"].tolist() == [1, 1, 0, 0, 0, 0]
+    assert cal["vespera_natal_ano_novo"].tolist() == [1, 0, 0, 0, 0, 0]
+    assert cal["feriado_municipal_grande"].tolist() == [0, 0, 1, 0, 0, 0]
+    assert cal["carnaval"].tolist() == [0, 0, 0, 1, 0, 0]  # Páscoa 2026 = 5/4
+    # 22/4/2026 está a 3 dias do 25 de Abril; o próprio 25 de Abril dá 0
+    assert cal.loc[4, "dias_ate_feriado"] == 3 and cal.loc[5, "dias_ate_feriado"] == 0
+    assert cal["dias_ate_feriado"].between(0, 7).all() and cal["dias_desde_feriado"].between(0, 7).all()
+    assert calendario._pascoa(2025) == pd.Timestamp("2025-04-20")
+
+
+def test_calendario_alargado_so_no_consumo(horario_sintetico):
+    grade = features.para_grade_local(horario_sintetico)
+    assert "dias_ate_feriado" in features.construir_exemplos(grade, None, "consumo")
+    assert "dias_ate_feriado" not in features.construir_exemplos(grade, None, "eolica")

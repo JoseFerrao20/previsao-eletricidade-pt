@@ -134,6 +134,9 @@ MODELOS_METEO_EXTRA = tuple(m for m in _modelos.split(",") if m)
 VARIAVEL_EXTRA_POR_GRUPO = {VENTO: "wind_speed_100m", SOL: "shortwave_radiation", POP: "temperature_2m"}
 GRUPO_EXTRA_POR_ALVO = {"eolica": VENTO, "solar": SOL, "consumo": POP}
 
+# Calendário alargado no consumo (distância a feriados, Natal, municipais, Carnaval).
+CALENDARIO_ALARGADO = os.environ.get("ELETRICIDADE_CALENDARIO_ALARGADO", "1") == "1"
+
 # Horizonte: a previsão emitida à meia-noite local de D cobre D (lead 1) e D+1 (lead 2).
 DIAS_HORIZONTE = 2
 
