@@ -1,52 +1,54 @@
 {
-  "gerado_em": "2026-11-08T07:18:39+00:00",
+  "gerado_em": "2026-11-09T07:56:36+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261106T0801-f35a707",
-      "n_horas": 144,
-      "MAE_realizado": 209.40842023401476,
-      "MAE_naive_sazonal": 287.74079861111113,
+      "versao": "20261108T1049-f35a707",
+      "n_horas": 168,
+      "MAE_realizado": 207.16011714406787,
+      "MAE_naive_sazonal": 309.6108630952381,
       "MAE_referencia": 152.1594210880966,
       "psi": {
-        "populacao__temperature_2m": 0.399,
-        "populacao__cloud_cover": 0.532,
-        "populacao__shortwave_radiation": 0.025
+        "populacao__temperature_2m": 0.332,
+        "populacao__cloud_cover": 0.521,
+        "populacao__shortwave_radiation": 0.02
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.40)",
-        "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.53)"
+        "meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.33)",
+        "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.52)"
       ],
       "sinais": [
-        "degradação: MAE 209 MW = 1.38× a referência (152)"
+        "degradação: MAE 207 MW = 1.36× a referência (152)"
       ]
     },
     "eolica": {
-      "versao": "20261106T0801-f35a707",
-      "n_horas": 144,
-      "MAE_realizado": 422.0258473260604,
-      "MAE_naive_sazonal": 701.3130208333334,
+      "versao": "20261108T1049-f35a707",
+      "n_horas": 168,
+      "MAE_realizado": 639.3292031839455,
+      "MAE_naive_sazonal": 1117.3727678571431,
       "MAE_referencia": 406.0567608462779,
       "psi": {
-        "vento__wind_speed_100m": 0.472
+        "vento__wind_speed_100m": 0.34
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.47)"
+        "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.34)"
       ],
-      "sinais": []
+      "sinais": [
+        "degradação: MAE 639 MW = 1.57× a referência (406)"
+      ]
     },
     "solar": {
-      "versao": "20261106T0801-f35a707",
-      "n_horas": 144,
-      "MAE_realizado": 142.03440925297286,
-      "MAE_naive_sazonal": 205.45815972222223,
+      "versao": "20261108T1049-f35a707",
+      "n_horas": 168,
+      "MAE_realizado": 147.9193257564785,
+      "MAE_naive_sazonal": 224.44776785714288,
       "MAE_referencia": 137.1998292323054,
       "psi": {
-        "sol__shortwave_radiation": 0.042,
-        "sol__cloud_cover": 0.565,
-        "sol__temperature_2m": 0.176
+        "sol__shortwave_radiation": 0.041,
+        "sol__cloud_cover": 0.463,
+        "sol__temperature_2m": 0.133
       },
       "avisos": [
-        "meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.56)"
+        "meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.46)"
       ],
       "sinais": []
     }
