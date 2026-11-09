@@ -76,3 +76,16 @@ jobs:
               | jq -c '{erro: .reason, chaves: (.hourly // {} | keys), nulos: (.hourly // {} | with_entries(select(.key != "time")) | map_values([.[] | select(. == null)] | length)), n: (.hourly.time // [] | length)}'
             echo "::endgroup::"
           done
+
+      - name: Open-Meteo Previous Runs - início do arquivo por modelo
+        shell: bash
+        run: |
+          set +e
+          URL="https://previous-runs-api.open-meteo.com/v1/forecast"
+          for d in 2024-03-15 2024-06-15 2024-09-15 2024-12-15 2025-03-15 2025-06-15 2025-09-15; do
+            r=$(curl -sS -m 60 -A "previsao-eletricidade-pt (+https://github.com/${GITHUB_REPOSITORY})" \
+              "$URL?latitude=40.57&longitude=-8.17&hourly=wind_speed_100m_previous_day2&models=best_match,ecmwf_ifs025,gfs_seamless,icon_seamless,meteofrance_seamless&wind_speed_unit=ms&timezone=GMT&start_date=$d&end_date=$d" \
+              | jq -c '.hourly // {} | with_entries(select(.key != "time")) | map_values([.[] | select(. != null)] | length)')
+            echo "$d $r"
+            sleep 2
+          done
