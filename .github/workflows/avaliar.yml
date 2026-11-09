@@ -1,0 +1,43 @@
+name: avaliar
+
+# Avaliação de uma alteração (branch) com dados reais, sem efeitos laterais:
+# não toca no branch `estado`, não promove modelos e não escreve no `main`.
+# Corre o mesmo backtest semana a semana do `retreino` e publica as tabelas no
+# resumo da execução e como artefacto, para comparar com o `main`.
+on:
+  workflow_dispatch:
+    inputs:
+      semanas:
+        description: Semanas de backtest
+        default: "52"
+
+permissions:
+  contents: read
+
+jobs:
+  avaliar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen
+
+      - uses: actions/cache@v5
+        with:
+          path: dados
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - timeout-minutes: 75
+        run: uv run eletricidade ingest
+
+      - name: Backtest
+        env:
+          SEMANAS: ${{ inputs.semanas }}
+        run: uv run eletricidade backtest --semanas "$SEMANAS"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: avaliacao-${{ github.ref_name }}
+          path: artefactos/*.csv
