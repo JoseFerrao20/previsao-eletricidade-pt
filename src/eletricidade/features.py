@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from . import calendario, config
+from .meteo import colunas_por_ponto
 
 
 def para_grade_local(horario_utc: pd.DataFrame) -> pd.DataFrame:
@@ -77,7 +78,7 @@ def features_historicas(
 
 def features_meteo(meteo_grupos_utc: pd.DataFrame, alvo: str, lead: int) -> pd.DataFrame:
     """Meteorologia prevista para o alvo, com a corrida correspondente ao lead."""
-    colunas = [f"{g}__{v}" for g, v in config.METEO_POR_ALVO[alvo]]
+    colunas = [f"{g}__{v}" for g, v in config.METEO_POR_ALVO[alvo]] + colunas_por_ponto(alvo)
     sub = meteo_grupos_utc.xs(lead, level="lead_dias").reindex(columns=colunas)
     sub.index = pd.DatetimeIndex(sub.index)
     if sub.index.tz is None:

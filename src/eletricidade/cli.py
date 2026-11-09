@@ -48,7 +48,15 @@ def cmd_ingest(args) -> int:
     horario.to_parquet(config.FICH_REN_HORARIO)
     # Meteorologia até D+1 (necessária para emitir a previsão de hoje).
     meteo.atualizar(desde, hoje + timedelta(days=config.DIAS_HORIZONTE - 1))
-    meteo.construir_horario().to_parquet(config.FICH_METEO_HORARIO, index=False)
+    longo = meteo.construir_horario()
+    longo.to_parquet(config.FICH_METEO_HORARIO, index=False)
+    resumo = meteo.resumo_por_ponto(longo)
+    _resumo_github(
+        "## Meteorologia prevista por ponto (D, todo o histórico)\n\n"
+        "Média e percentis 10/50/90. Vento a 100 m em m/s, radiação em W/m², nebulosidade em %.\n\n"
+        + _markdown_simples(resumo.reset_index())
+        + "\n"
+    )
     graves = {d: e for d, e in falhas.items() if not ren.e_dia_mudanca_hora(d) and d < hoje}
     log.info("REN: %d horas, de %s a %s", len(horario), horario.index.min(), horario.index.max())
     for d, e in falhas.items():
@@ -100,6 +108,13 @@ def cmd_backtest(args) -> int:
         texto = _substituir_bloco(texto, "ANALISE", texto_analise)
         readme.write_text(texto, encoding="utf-8")
     return 0
+
+
+def _markdown_simples(tabela: pd.DataFrame) -> str:
+    cab = "| " + " | ".join(map(str, tabela.columns)) + " |"
+    sep = "|" + "---|" * len(tabela.columns)
+    linhas = ["| " + " | ".join(map(str, r)) + " |" for r in tabela.itertuples(index=False)]
+    return "\n".join([cab, sep, *linhas])
 
 
 def _substituir_bloco(texto: str, nome: str, conteudo: str) -> str:

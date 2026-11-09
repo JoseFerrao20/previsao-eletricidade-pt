@@ -45,8 +45,16 @@ def psi(esperado: list[float], limites: list[float], valores: np.ndarray, eps: f
 
 
 def colunas_drift(exemplos: pd.DataFrame) -> list[str]:
-    """Features exógenas contínuas: a meteorologia prevista (colunas ``grupo__variavel``)."""
-    return [c for c in exemplos.columns if "__" in c]
+    """Features exógenas contínuas: a meteorologia prevista, só as médias ``grupo__variavel``.
+
+    As séries por ponto ficam de fora: são muitas e ruidosas, e as médias já resumem a
+    mudança; o proxy de potência é uma transformação do vento e também fica de fora.
+    """
+    return [
+        c
+        for c in exemplos.columns
+        if "__" in c and not c.startswith(config.PREFIXO_PONTO) and not c.endswith("potencia_proxy")
+    ]
 
 
 def drift_sazonal(exemplos: pd.DataFrame, hoje: pd.Timestamp) -> dict[str, float]:

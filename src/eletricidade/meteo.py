@@ -13,6 +13,7 @@ Todas as corridas usadas já estavam publicadas à hora de emissão.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
@@ -106,8 +107,21 @@ def _meses(inicio: date, fim: date) -> list[pd.Period]:
     return list(pd.period_range(pd.Period(inicio, "M"), pd.Period(fim, "M"), freq="M"))
 
 
+def assinatura() -> str:
+    """Identifica a lista de pontos e variáveis: mudá-la obriga a novo download, sem misturar."""
+    texto = json.dumps(
+        [[(p.nome, p.lat, p.lon) for p in config.PONTOS], config.VARIAVEIS_METEO, LEAD_METEO],
+        sort_keys=True,
+    )
+    return hashlib.sha1(texto.encode()).hexdigest()[:10]
+
+
+def pasta_bruta() -> Path:
+    return config.DIR_METEO_BRUTO / assinatura()
+
+
 def caminho_bruto(mes: pd.Period, raiz: Path | None = None) -> Path:
-    return (raiz or config.DIR_METEO_BRUTO) / f"{mes}.json"
+    return (raiz or pasta_bruta()) / f"{mes}.json"
 
 
 def atualizar(inicio: date, fim: date, raiz: Path | None = None) -> list[str]:
@@ -131,7 +145,7 @@ def atualizar(inicio: date, fim: date, raiz: Path | None = None) -> list[str]:
 
 
 def construir_horario(raiz: Path | None = None) -> pd.DataFrame:
-    raiz = raiz or config.DIR_METEO_BRUTO
+    raiz = raiz or pasta_bruta()
     ficheiros = sorted(raiz.glob("*.json"))
     if not ficheiros:
         raise ErroMeteo(f"Sem dados meteorológicos em {raiz}")
@@ -141,14 +155,61 @@ def construir_horario(raiz: Path | None = None) -> pd.DataFrame:
     return longo.drop_duplicates(["ts_utc", "ponto", "variavel", "lead_dias"], keep="last")
 
 
+def _com_proxy_eolico(longo: pd.DataFrame) -> pd.DataFrame:
+    """Acrescenta a variável ``potencia_proxy`` = min(v, V_NOMINAL)^3 por ponto (só vento)."""
+    vento = longo[longo["variavel"] == "wind_speed_100m"]
+    proxy = vento.assign(
+        variavel="potencia_proxy", valor=vento["valor"].clip(0, config.V_NOMINAL_EOLICA) ** 3
+    )
+    return pd.concat([longo, proxy], ignore_index=True)
+
+
 def agregar_por_grupo(longo: pd.DataFrame) -> pd.DataFrame:
-    """Média por grupo de pontos -> colunas ``<grupo>__<variavel>``, índice (ts_utc, lead_dias)."""
-    grupos = {p.nome: p.grupo for p in config.PONTOS}
-    tabela = longo.assign(grupo=longo["ponto"].map(grupos))
-    tabela = (
-        tabela.groupby(["ts_utc", "lead_dias", "grupo", "variavel"])["valor"]
+    """Tabela larga, índice (ts_utc, lead_dias).
+
+    - médias por grupo de pontos: ``<grupo>__<variavel>`` (um ponto pode estar em vários grupos);
+    - séries por ponto das variáveis em METEO_POR_PONTO: ``ponto_<nome>__<variavel>``.
+    """
+    longo = _com_proxy_eolico(longo)
+    grupos = pd.DataFrame([(p.nome, g) for p in config.PONTOS for g in p.grupos], columns=["ponto", "grupo"])
+    por_grupo = (
+        longo.merge(grupos, on="ponto")
+        .groupby(["ts_utc", "lead_dias", "grupo", "variavel"])["valor"]
         .mean()
         .unstack(["grupo", "variavel"])
     )
-    tabela.columns = [f"{g}__{v}" for g, v in tabela.columns]
-    return tabela.sort_index()
+    por_grupo.columns = [f"{g}__{v}" for g, v in por_grupo.columns]
+
+    pedidos = {
+        (p.nome, v)
+        for grupo, variaveis in config.METEO_POR_PONTO.values()
+        for p in config.PONTOS
+        if grupo in p.grupos
+        for v in variaveis
+    }
+    chave = pd.MultiIndex.from_frame(longo[["ponto", "variavel"]])
+    sel = longo[chave.isin(list(pedidos))]
+    por_ponto = sel.pivot_table(
+        index=["ts_utc", "lead_dias"], columns=["ponto", "variavel"], values="valor", aggfunc="mean"
+    )
+    por_ponto.columns = [f"{config.PREFIXO_PONTO}{p}__{v}" for p, v in por_ponto.columns]
+    return por_grupo.join(por_ponto, how="left").sort_index()
+
+
+def colunas_por_ponto(alvo: str) -> list[str]:
+    if alvo not in config.METEO_POR_PONTO:
+        return []
+    grupo, variaveis = config.METEO_POR_PONTO[alvo]
+    return [
+        f"{config.PREFIXO_PONTO}{p.nome}__{v}" for p in config.PONTOS if grupo in p.grupos for v in variaveis
+    ]
+
+
+def resumo_por_ponto(longo: pd.DataFrame) -> pd.DataFrame:
+    """Distribuição (lead 1) de cada variável por ponto: para verificar a escolha dos pontos."""
+    d = longo[longo["lead_dias"] == 1]
+    return (
+        d.groupby(["variavel", "ponto"])["valor"]
+        .describe(percentiles=[0.1, 0.5, 0.9])[["mean", "10%", "50%", "90%"]]
+        .round(1)
+    )
