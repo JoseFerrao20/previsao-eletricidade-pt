@@ -130,24 +130,30 @@ Backtest semana a semana: 52 semanas de teste, de 2025-11-03 a 2026-11-01; horiz
 | solar | Persistência (D-1) | 189 | 36.6% | 31.0% | +13.8% |
 <!-- RESULTADOS:FIM -->
 
-**Leitura** (backtest de 2026-11-05: 52 semanas, de novembro de 2025 a
-novembro de 2026, 8728 previsões por alvo e horizonte):
+**Leitura** (backtest de 2026-11-09, já com as melhorias da secção seguinte:
+52 semanas, de novembro de 2025 a novembro de 2026, 8728 previsões por alvo e
+horizonte):
 
 | Alvo | MAE LightGBM, D / D+1 | Melhor modelo simples (MAE) | Skill vs. melhor simples |
 |------|----------------------:|-----------------------------|-------------------------:|
-| consumo | 215 / 244 MW | naive sazonal (351) | +35 % |
-| eolica | 518 / 566 MW | média da semana anterior (854) | +37 % |
-| solar | 126 / 139 MW | média da semana anterior (175) | +25 % |
+| consumo | 194 / 220 MW | naive sazonal (351) | +41 % |
+| eolica | 325 / 386 MW | média da semana anterior (854) | +58 % |
+| solar | 113 / 127 MW | média da semana anterior (175) | +31 % |
 
-- **Consumo:** MAPE de 3,7 % num ano inteiro. O naive sazonal é a referência
+Evolução do MAE total (mesmas 52 semanas): consumo 230 → 207 MW, eólica 542 →
+355 MW, solar 132 → 120 MW. As experiências que explicam cada salto estão mais
+abaixo.
+
+- **Consumo:** MAPE de 3,3 % num ano inteiro. O naive sazonal é a referência
   mais forte, porque já capta o padrão semanal; a persistência (D-1) é a pior,
   sobretudo em D+1 (679 MW), porque ignora o fim de semana.
-- **Eólica:** o vento previsto é informação que nenhum modelo simples tem. O
-  MAPE (~100 %) é enganador: há muitas horas com pouca produção, onde o erro
-  relativo explode. Para a eólica, o MAE é a métrica que conta.
-- **Solar:** o MAPE subiu de 17 % (só maio a novembro) para 24 % com o
-  inverno incluído: os dias de inverno produzem pouco, e o erro relativo pesa mais.
-- De D para D+1 o erro sobe 9 a 13 %, coerente com a meteorologia mais antiga
+- **Eólica:** o vento previsto é informação que nenhum modelo simples tem, e é
+  onde o modelo mais ganha. O MAPE (~55 %) é enganador: há muitas horas com
+  pouca produção, onde o erro relativo explode. Para a eólica, o MAE é a
+  métrica que conta.
+- **Solar:** MAPE de 21 % com o inverno incluído: os dias de inverno produzem
+  pouco, e o erro relativo pesa mais.
+- De D para D+1 o erro sobe 12 a 19 %, coerente com a meteorologia mais antiga
   (previsão feita 3 dias antes em vez de 2).
 
 ### Onde o modelo ganha
@@ -206,7 +212,7 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Nebulosidade prevista (horas de sol) | ≥ 60 % | 3 310 | 254 | 508 | 387 (média sem.) | +34% |
 <!-- ANALISE:FIM -->
 
-**O que a análise mostra** (mesmo backtest de 2026-11-05):
+**O que a primeira análise mostrou** (backtest de 2026-11-05, antes das experiências seguintes; a tabela acima já é a atual):
 
 - **Feriados:** é onde o consumo mais ganha (+69 %: 217 vs. 689 MW). O naive
   usa o mesmo dia da semana anterior, que foi dia útil; o modelo sabe que é
