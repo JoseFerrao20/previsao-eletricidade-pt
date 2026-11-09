@@ -12,7 +12,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from . import analise, backtest, config, features, meteo, monitor, painel, producao, registo, ren
+from . import analise, backtest, config, features, intervalos, meteo, monitor, painel, producao, registo, ren
 
 log = logging.getLogger("eletricidade")
 
@@ -98,6 +98,24 @@ def cmd_backtest(args) -> int:
     (config.ARTEFACTOS / "resultados.md").write_text(tabela + "\n", encoding="utf-8")
     print(tabela)
     _resumo_github(tabela)
+    previsoes = intervalos.calibrar_backtest(previsoes)
+    previsoes.to_parquet(config.ARTEFACTOS / "backtest_previsoes.parquet", index=False)
+    intervalos.ajustes_producao(previsoes).to_csv(
+        config.ARTEFACTOS / "backtest_calibracao_intervalos.csv", index=False
+    )
+    resumo_int = backtest.resumir_intervalos(previsoes)
+    resumo_int.to_csv(config.ARTEFACTOS / "backtest_intervalos.csv", index=False)
+    texto_intervalos = (
+        f"Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas {semanas.nunique()} semanas, "
+        f"menos as {intervalos.MIN_SEMANAS} primeiras (precisam de erros passados para calibrar). "
+        "Um intervalo bem calibrado contém o valor real em ~80 % das horas, com ~10 % de cada lado; "
+        "entre intervalos calibrados, o mais estreito é melhor (menor pinball). *Calibrado*: "
+        f"cada limite deslocado pelo quantil 90 % dos erros das {intervalos.JANELA_SEMANAS} semanas "
+        "anteriores, por alvo, horizonte e hora (calibração conformal).\n\n"
+        + backtest.tabela_intervalos_markdown(resumo_int)
+    )
+    (config.ARTEFACTOS / "intervalos.md").write_text(texto_intervalos + "\n", encoding="utf-8")
+    _resumo_github("## Intervalos de previsão\n\n" + texto_intervalos)
     segmentos = analise.tabela_completa(previsoes, ex)
     segmentos.to_csv(config.ARTEFACTOS / "backtest_segmentos.csv", index=False)
     texto_analise = (
@@ -114,6 +132,7 @@ def cmd_backtest(args) -> int:
         texto = readme.read_text(encoding="utf-8")
         texto = _substituir_bloco(texto, "RESULTADOS", tabela)
         texto = _substituir_bloco(texto, "ANALISE", texto_analise)
+        texto = _substituir_bloco(texto, "INTERVALOS", texto_intervalos)
         readme.write_text(texto, encoding="utf-8")
     return 0
 

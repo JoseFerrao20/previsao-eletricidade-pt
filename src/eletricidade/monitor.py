@@ -132,6 +132,9 @@ def avaliar(
             mae_m = metricas.mae(r["y"], r["previsao"])
             mae_n = metricas.mae(r["y"], r["naive_sazonal"])
             info.update({"MAE_realizado": mae_m, "MAE_naive_sazonal": mae_n, "MAE_referencia": referencia})
+            if {"p10", "p90"} <= set(r.columns) and r["p10"].notna().any():
+                ri = r.dropna(subset=["p10", "p90"])
+                info["cobertura_80"] = float(100 * ((ri["y"] >= ri["p10"]) & (ri["y"] <= ri["p90"])).mean())
             if referencia and mae_m / referencia > config.LIMIAR_DEGRADACAO:
                 sinais.append(
                     f"degradação: MAE {mae_m:.0f} MW = {mae_m / referencia:.2f}× "
@@ -168,6 +171,8 @@ def markdown(relatorio: dict) -> str:
                 f"naive sazonal: {info['MAE_naive_sazonal']:.0f} MW · "
                 f"referência do backtest: {info['MAE_referencia'] or float('nan'):.0f} MW"
             )
+        if "cobertura_80" in info:
+            linhas.append(f"- cobertura realizada do intervalo a 80 %: {info['cobertura_80']:.0f} %")
         linhas += [f"- {s}" for s in info["sinais"]] or ["- sem sinais de degradação"]
         linhas += [f"- aviso: {a}" for a in info.get("avisos", [])]
         linhas.append("")

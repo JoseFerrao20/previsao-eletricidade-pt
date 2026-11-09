@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import backtest, config, features, meteo, metricas, monitor, registo
+from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo
 from .modelos import REFERENCIAS, ModeloLGBM
 
 log = logging.getLogger(__name__)
@@ -116,10 +116,32 @@ def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = No
         bloco["alvo"] = alvo
         bloco["versao"] = meta["versao"]
         bloco["previsao"] = modelo.prever(ex)
+        if getattr(modelo, "quantis", None):  # versões anteriores do registo não têm intervalos
+            bloco["p10"], bloco["p90"] = modelo.prever_intervalo(ex)
+        else:
+            bloco["p10"] = bloco["p90"] = float("nan")
         for nome in REFERENCIAS:
             bloco[nome] = ex[REFERENCIAS[nome]].to_numpy()
         partes.append(bloco)
     return pd.concat(partes, ignore_index=True)
+
+
+FICH_CALIBRACAO = "backtest_calibracao_intervalos.csv"
+
+
+def calibrar_intervalos(previsao: pd.DataFrame, pasta: Path | None = None) -> pd.DataFrame:
+    """Aplica a calibração conformal do último backtest (se existir) aos limites P10/P90."""
+    fich = (pasta or config.ESTADO) / FICH_CALIBRACAO
+    previsao = previsao.copy()
+    previsao["intervalo_calibrado"] = False
+    if not fich.exists() or previsao["p10"].isna().all():
+        if not fich.exists():
+            log.warning("Sem %s: intervalos sem calibração conformal", fich.name)
+        return previsao
+    tabela = pd.read_csv(fich)
+    previsao["p10"], previsao["p90"] = intervalos.aplicar(previsao, tabela, "previsao", "p10", "p90")
+    previsao["intervalo_calibrado"] = True
+    return previsao
 
 
 def guardar_previsao(previsao: pd.DataFrame, pasta: Path | None = None) -> Path:

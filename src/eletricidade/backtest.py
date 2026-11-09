@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from . import config, metricas
-from .modelos import REFERENCIAS, ModeloLGBM, prever_referencia
+from .modelos import QUANTIS, REFERENCIAS, ModeloLGBM, prever_referencia
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ def correr(
         bloco = teste[["origem", "dia", "hora", "lead", "y"]].copy()
         bloco["semana"] = segunda
         bloco["lightgbm"] = modelo.prever(teste)
+        bloco["lightgbm_p10"], bloco["lightgbm_p90"] = modelo.prever_intervalo(teste)
         for nome in REFERENCIAS:
             bloco[nome] = prever_referencia(teste, nome)
         resultados.append(bloco)
@@ -95,6 +96,68 @@ def resumir(previsoes: pd.DataFrame, por: tuple[str, ...] = ()) -> pd.DataFrame:
     ref = tabela[tabela["modelo"] == "naive_sazonal"].set_index(chaves)["MAE"]
     tabela["skill_vs_naive_sazonal"] = 1 - tabela["MAE"] / tabela.set_index(chaves).index.map(ref).to_numpy()
     return tabela
+
+
+def resumir_intervalos(previsoes: pd.DataFrame) -> pd.DataFrame:
+    """Cobertura do intervalo 10–90 % por alvo e horizonte (nominal: 80 %).
+
+    Ingénuo de comparação: o intervalo empírico do naive sazonal, isto é, o
+    naive ± os quantis 10 % e 90 % dos seus erros nas semanas *anteriores* de
+    teste (sem olhar para a semana avaliada).
+    """
+    linhas = []
+    for (alvo, lead), g in previsoes.groupby(["alvo", "lead"]):
+        g = g.dropna(subset=["y", "lightgbm_p10", "lightgbm_p90", "naive_sazonal"]).sort_values("semana")
+        nb, na = _intervalo_naive_empirico(g)
+        # Todos os intervalos nas mesmas linhas: as que já têm histórico para calibrar.
+        ok = np.isfinite(nb)
+        if "lightgbm_p10c" in g:
+            ok &= g["lightgbm_p10c"].notna().to_numpy()
+        candidatos = {"lightgbm": (g["lightgbm_p10"], g["lightgbm_p90"]), "naive_empirico": (nb, na)}
+        if "lightgbm_p10c" in g:
+            candidatos["lightgbm_calibrado"] = (g["lightgbm_p10c"], g["lightgbm_p90c"])
+        for nome, (b, a) in candidatos.items():
+            b, a = np.asarray(b, dtype=float)[ok], np.asarray(a, dtype=float)[ok]
+            m = metricas.intervalo(g["y"].to_numpy()[ok], b, a, QUANTIS)
+            linhas.append({"alvo": alvo, "lead": lead, "modelo": nome, "n": int(ok.sum()), **m})
+    return pd.DataFrame(linhas)
+
+
+def _intervalo_naive_empirico(g: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    erro = (g["y"] - g["naive_sazonal"]).to_numpy()
+    semanas = g["semana"].to_numpy()
+    baixo = np.full(len(g), np.nan)
+    alto = np.full(len(g), np.nan)
+    for s in np.unique(semanas):
+        antes = erro[semanas < s]
+        if antes.size < 24 * 7 * 4:  # pelo menos 4 semanas de erros passados
+            continue
+        q_b, q_a = np.quantile(antes, QUANTIS)
+        aqui = semanas == s
+        baixo[aqui] = g["naive_sazonal"].to_numpy()[aqui] + q_b
+        alto[aqui] = g["naive_sazonal"].to_numpy()[aqui] + q_a
+    return baixo, alto
+
+
+def tabela_intervalos_markdown(t: pd.DataFrame) -> str:
+    nomes = {
+        "lightgbm": "LightGBM (quantis, sem calibrar)",
+        "lightgbm_calibrado": "**LightGBM calibrado**",
+        "naive_empirico": "Naive ± erros passados",
+    }
+    linhas = [
+        "| Alvo | Horizonte | Intervalo | Cobertura (nominal 80 %) | Abaixo / acima | Largura média (MW) "
+        "| Pinball P10 / P90 (MW) |",
+        "|---|---|---|---:|---:|---:|---:|",
+    ]
+    for _, r in t.iterrows():
+        linhas.append(
+            f"| {r['alvo']} | {'D' if r['lead'] == 1 else 'D+1'} | {nomes[r['modelo']]} "
+            f"| {r['cobertura']:.1f}% "
+            f"| {r['abaixo']:.1f}% / {r['acima']:.1f}% | {r['largura']:.0f} "
+            f"| {r['pinball_baixo']:.0f} / {r['pinball_alto']:.0f} |"
+        )
+    return "\n".join(linhas)
 
 
 def erro_semanal(previsoes: pd.DataFrame) -> pd.DataFrame:

@@ -50,6 +50,9 @@ def test_ciclo_completo(estado, horario_sintetico):
         prev = producao.prever(origem, grade)
         assert len(prev) == 48 * len(config.ALVOS)
         assert set(prev["dia"]) == {origem, origem + pd.Timedelta(days=1)}
+        assert (prev["p10"] <= prev["previsao"] + 1e-9).all() and (
+            prev["previsao"] <= prev["p90"] + 1e-9
+        ).all()
         producao.guardar_previsao(prev)
     # a previsão não muda se o futuro (a partir da origem) for alterado
     alterada = grade.copy()
