@@ -284,6 +284,30 @@ amostras são pequenas.
 
 ### Intervalos de previsão
 
+Além do valor central, cada previsão traz um intervalo a 80 % (P10–P90): um
+LightGBM com perda quantílica para cada limite. Os quantis sozinhos ficaram
+**estreitos de mais** no backtest real: o valor real caía dentro em 63–70 % das
+horas, e no solar em ~53 %, com 40 % das horas acima do P90, porque a potência
+instalada cresce e o passado subestima o futuro. A correção é uma calibração
+conformal (CQR assimétrico):
+- cada limite é deslocado pelo quantil 90 % dos erros fora da amostra das 12
+  semanas anteriores;
+- o deslocamento é calculado por alvo, horizonte e hora do dia;
+- no backtest, cada semana é calibrada só com as semanas anteriores; em
+  produção, com as 12 mais recentes do último backtest.
+
+Resultado na avaliação de 2026-11-09 (52 semanas, menos as 4 primeiras):
+
+| Alvo | Cobertura sem calibrar | Cobertura calibrada | Largura (MW) | Largura do naive ± erros (cobertura) |
+|---|---:|---:|---:|---:|
+| consumo (D) | 66 % | 77 % | 645 | 1228 (81 %) |
+| eolica (D) | 70 % | 78 % | 1007 | 4524 (87 %) |
+| solar (D) | 54 % | 81 % | 370 | 783 (79 %) |
+
+Com cobertura parecida, os intervalos do modelo têm entre um quarto e metade
+da largura dos do naive. No consumo ficam ainda um pouco abaixo dos 80 %
+nominais.
+
 <!-- INTERVALOS:INICIO -->
 *Ainda sem resultados: gerados pelo próximo `retreino`.*
 <!-- INTERVALOS:FIM -->
