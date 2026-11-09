@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from eletricidade import calendario, features, meteo
+from eletricidade import calendario, config, features, meteo
 from tests.conftest import payload_meteo
 
 
@@ -75,8 +75,33 @@ def test_meteo_interpretar_e_juntar(horario_sintetico):
     ex = features.construir_exemplos(grade, grupos, "eolica")
     jan = ex[ex["dia"] < "2024-02-28"]
     # lead 1 usa previous_day2, lead 2 usa previous_day3 (valores sintéticos = índice do ponto + N)
-    assert jan.loc[jan["lead"] == 1, "vento__wind_speed_100m"].dropna().unique() == pytest.approx([4 + 2])
-    assert jan.loc[jan["lead"] == 2, "vento__wind_speed_100m"].dropna().unique() == pytest.approx([4 + 3])
+    idx_vento = [k for k, p in enumerate(config.PONTOS) if config.VENTO in p.grupos]
+    media = np.mean(idx_vento)
+    assert jan.loc[jan["lead"] == 1, "vento__wind_speed_100m"].dropna().unique() == pytest.approx([media + 2])
+    assert jan.loc[jan["lead"] == 2, "vento__wind_speed_100m"].dropna().unique() == pytest.approx([media + 3])
+    # séries por ponto e proxy de potência (média de min(v, 13)^3, não o cubo da média)
+    k = idx_vento[0]
+    assert jan.loc[jan["lead"] == 1, f"ponto_{config.PONTOS[k].nome}__wind_speed_100m"].dropna().unique() == (
+        pytest.approx([k + 2])
+    )
+    proxy = np.mean([min(i + 2, config.V_NOMINAL_EOLICA) ** 3 for i in idx_vento])
+    assert jan.loc[jan["lead"] == 1, "vento__potencia_proxy"].dropna().unique() == pytest.approx([proxy])
+    assert set(meteo.colunas_por_ponto("eolica")) <= set(ex.columns)
+
+
+def test_um_ponto_pode_estar_em_varios_grupos():
+    longo = meteo.interpretar(payload_meteo("2024-01-01", "2024-01-02"))
+    grupos = meteo.agregar_por_grupo(longo)
+    idx_sol = [k for k, p in enumerate(config.PONTOS) if config.SOL in p.grupos]
+    assert any(config.POP in config.PONTOS[k].grupos for k in idx_sol)  # Lisboa e Porto
+    valor = grupos.xs(1, level="lead_dias")["sol__cloud_cover"].iloc[0]
+    assert valor == pytest.approx(np.mean(idx_sol) + 2)
+
+
+def test_assinatura_muda_com_os_pontos(monkeypatch):
+    antes = meteo.assinatura()
+    monkeypatch.setattr(config, "PONTOS", config.PONTOS[:-1])
+    assert meteo.assinatura() != antes
 
 
 def test_calendario_feriados_e_pontes():

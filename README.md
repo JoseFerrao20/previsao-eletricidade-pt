@@ -38,7 +38,7 @@ previsões meteorológicas já publicadas antes de D.
 | Fonte | Endpoint | Notas |
 |-------|----------|-------|
 | REN Data Hub | `GET https://servicebus.ren.pt/datahubapi/electricity/ElectricityProductionBreakdownDaily?date=AAAA-MM-DD&culture=pt-PT` | Pública, sem autenticação. JSON tipo Highcharts: `xAxis.categories` (96 intervalos de 15 min) e `series[{name, data}]` em MW. Um pedido por dia. |
-| Open-Meteo *Previous Runs* | `GET https://previous-runs-api.open-meteo.com/v1/forecast` com `<variável>_previous_dayN` | Previsões **tal como eram conhecidas N dias antes**. A mesma API serve o treino, o backtest e a produção, por isso o modelo nunca vê meteorologia melhor do que a que teria. Variáveis: temperatura, vento a 100 m, radiação, nebulosidade, em 9 pontos. |
+| Open-Meteo *Previous Runs* | `GET https://previous-runs-api.open-meteo.com/v1/forecast` com `<variável>_previous_dayN` | Previsões **tal como eram conhecidas N dias antes**. A mesma API serve o treino, o backtest e a produção, por isso o modelo nunca vê meteorologia melhor do que a que teria. Variáveis: temperatura, vento a 100 m, radiação, nebulosidade, em 24 pontos (população, serras com parques eólicos, zonas fotovoltaicas). |
 | Feriados | biblioteca [`holidays`](https://pypi.org/project/holidays/) (`PT`) | Regras locais, sem dependência de rede. |
 
 Os endpoints foram confirmados em código público de vários projetos
@@ -225,10 +225,29 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
   (+25 %), e é menor com nuvens parciais (+18 %), que são o caso mais difícil.
   Por estação, ganha mais no inverno (+31 %) do que na primavera e no verão
   (+19 a 21 %).
-- **Por confirmar:** em 60 % das horas, o vento previsto nos 3 pontos de
-  vento fica abaixo de 4 m/s a 100 m. É pouco para zonas de parques eólicos.
-  As unidades estão certas (m/s, pedidas explicitamente), mas os pontos podem
-  não representar bem onde está a potência instalada.
+- **Vento fraco nos pontos (resolvido):** em 60 % das horas, o vento previsto
+  nos 3 pontos iniciais ficava abaixo de 4 m/s a 100 m. Isto apontava para
+  pontos mal escolhidos. A experiência seguinte confirmou-o.
+
+#### Experiência: pontos meteorológicos onde está a produção
+
+Antes havia 3 pontos de vento e 3 de sol, e o modelo via só a média de cada
+grupo. Agora há 12 pontos nas serras onde se concentram os parques eólicos
+(Caramulo, Freita, Montemuro, Alvão, Barroso, Arga, Guarda, Gardunha, Lousã,
+Candeeiros, Oeste, Monchique) e 10 nas zonas fotovoltaicas (incluindo Lisboa e
+Porto, pela produção em telhados). O LightGBM recebe a série de cada ponto e
+aprende o peso de cada um com os dados de treino de cada semana do backtest:
+nenhum valor de potência instalada é imposto. A eólica recebe também um proxy de
+potência, a média por ponto de min(v, 13 m/s)³: a curva de potência não é
+linear, e a média dos cubos não é o cubo da média.
+
+Mesmas 52 semanas, mesmas horas (workflow `avaliar`, `main` contra o branch):
+
+| Alvo | MAE antes | MAE depois | Variação |
+|---|---:|---:|---:|
+| eolica | 542 MW | 355 MW | **−34 %** |
+| solar | 132 MW | 120 MW | −9 % |
+| consumo | 230 MW | 230 MW | 0 % (não mudou nada para o consumo) |
 
 ## 5. MLOps
 
@@ -299,8 +318,9 @@ Conhecidas à partida:
 - A API da REN não tem documentação formal de contrato: os nomes das séries e o
   formato podem mudar. A ingestão falha de forma explícita em vez de adivinhar.
 - Os dias de mudança de hora têm 92 ou 100 intervalos; são tratados em UTC.
-- A meteorologia é amostrada em 9 pontos representativos (não é uma média
-  ponderada pela potência instalada).
+- A meteorologia é amostrada em 24 pontos escolhidos geograficamente. O peso de
+  cada um é aprendido pelo modelo, não vem de dados de potência instalada por
+  concelho.
 - Para garantir que nenhuma corrida meteorológica usada é posterior à emissão,
   o alvo em D usa a previsão feita 2 dias antes e D+1 a feita 3 dias antes. Na
   prática existem previsões mais frescas, por isso o erro reportado é
