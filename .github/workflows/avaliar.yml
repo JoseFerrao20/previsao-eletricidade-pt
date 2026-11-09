@@ -26,14 +26,23 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen
 
-      - uses: actions/cache@v5
+      - name: Dados brutos (restaurar cache)
+        uses: actions/cache/restore@v5
         with:
           path: dados
           key: dados-${{ github.run_id }}
           restore-keys: dados-
 
-      - timeout-minutes: 75
+      - name: Ingestão incremental (REN + Open-Meteo)
+        timeout-minutes: 75
         run: uv run eletricidade ingest
+
+      - name: Dados brutos (guardar cache, mesmo com falhas)
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: dados
+          key: dados-${{ github.run_id }}
 
       - name: Backtest
         env:

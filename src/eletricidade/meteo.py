@@ -128,19 +128,28 @@ def atualizar(inicio: date, fim: date, raiz: Path | None = None) -> list[str]:
     """Descarrega meses em falta; o mês de ``fim`` e o anterior são sempre revistos."""
     meses = _meses(inicio, fim)
     ultimos = set(meses[-2:])
-    feitos = []
+    feitos, falhas = [], {}
     for mes in meses:
         destino = caminho_bruto(mes, raiz)
         if destino.exists() and mes not in ultimos:
             continue
         a = max(mes.start_time.date(), inicio)
         b = min(mes.end_time.date(), fim)
-        locais = descarregar(a, b)
-        interpretar(locais)  # valida antes de gravar
+        try:
+            locais = descarregar(a, b)
+            interpretar(locais)  # valida antes de gravar
+        except ErroMeteo as erro:
+            # Continua: os meses já obtidos ficam gravados (e na cache), e a próxima
+            # execução só pede os que faltam.
+            falhas[str(mes)] = str(erro)
+            log.error("Open-Meteo %s: %s", mes, erro)
+            continue
         destino.parent.mkdir(parents=True, exist_ok=True)
         destino.write_text(json.dumps(locais), encoding="utf-8")
         feitos.append(str(mes))
         time.sleep(1.0)
+    if falhas:
+        raise ErroMeteo(f"{len(falhas)} meses falharam ({', '.join(falhas)}); {len(feitos)} gravados")
     return feitos
 
 

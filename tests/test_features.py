@@ -110,3 +110,19 @@ def test_calendario_feriados_e_pontes():
     assert cal["feriado"].tolist() == [1, 0, 0, 0]
     # 05/06/2026 é sexta depois do Corpo de Deus (quinta); 07/12 é segunda antes de 08/12
     assert cal["ponte"].tolist() == [0, 1, 1, 0]
+
+
+def test_meteo_continua_quando_um_mes_falha(tmp_path, monkeypatch):
+    """Um mês que falha não deita fora os outros: ficam gravados e a falha é reportada no fim."""
+    from datetime import date
+
+    def descarregar(a, b):
+        if a.month == 2:
+            raise meteo.ErroMeteo("timeout")
+        return payload_meteo(str(a), str(b))
+
+    monkeypatch.setattr(meteo, "descarregar", descarregar)
+    monkeypatch.setattr(meteo.time, "sleep", lambda s: None)
+    with pytest.raises(meteo.ErroMeteo, match="1 meses falharam"):
+        meteo.atualizar(date(2024, 1, 1), date(2024, 3, 31), raiz=tmp_path)
+    assert sorted(f.stem for f in tmp_path.glob("*.json")) == ["2024-01", "2024-03"]
