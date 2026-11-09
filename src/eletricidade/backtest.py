@@ -108,12 +108,18 @@ def resumir_intervalos(previsoes: pd.DataFrame) -> pd.DataFrame:
     linhas = []
     for (alvo, lead), g in previsoes.groupby(["alvo", "lead"]):
         g = g.dropna(subset=["y", "lightgbm_p10", "lightgbm_p90", "naive_sazonal"]).sort_values("semana")
-        m = metricas.intervalo(g["y"], g["lightgbm_p10"], g["lightgbm_p90"], QUANTIS)
-        linhas.append({"alvo": alvo, "lead": lead, "modelo": "lightgbm", "n": len(g), **m})
-        baixo, alto = _intervalo_naive_empirico(g)
-        ok = np.isfinite(baixo)
-        mn = metricas.intervalo(g["y"][ok], baixo[ok], alto[ok], QUANTIS)
-        linhas.append({"alvo": alvo, "lead": lead, "modelo": "naive_empirico", "n": int(ok.sum()), **mn})
+        nb, na = _intervalo_naive_empirico(g)
+        # Todos os intervalos nas mesmas linhas: as que já têm histórico para calibrar.
+        ok = np.isfinite(nb)
+        if "lightgbm_p10c" in g:
+            ok &= g["lightgbm_p10c"].notna().to_numpy()
+        candidatos = {"lightgbm": (g["lightgbm_p10"], g["lightgbm_p90"]), "naive_empirico": (nb, na)}
+        if "lightgbm_p10c" in g:
+            candidatos["lightgbm_calibrado"] = (g["lightgbm_p10c"], g["lightgbm_p90c"])
+        for nome, (b, a) in candidatos.items():
+            b, a = np.asarray(b, dtype=float)[ok], np.asarray(a, dtype=float)[ok]
+            m = metricas.intervalo(g["y"].to_numpy()[ok], b, a, QUANTIS)
+            linhas.append({"alvo": alvo, "lead": lead, "modelo": nome, "n": int(ok.sum()), **m})
     return pd.DataFrame(linhas)
 
 
@@ -134,7 +140,11 @@ def _intervalo_naive_empirico(g: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
 
 
 def tabela_intervalos_markdown(t: pd.DataFrame) -> str:
-    nomes = {"lightgbm": "**LightGBM (quantis)**", "naive_empirico": "Naive ± erros passados"}
+    nomes = {
+        "lightgbm": "LightGBM (quantis, sem calibrar)",
+        "lightgbm_calibrado": "**LightGBM calibrado**",
+        "naive_empirico": "Naive ± erros passados",
+    }
     linhas = [
         "| Alvo | Horizonte | Intervalo | Cobertura (nominal 80 %) | Abaixo / acima | Largura média (MW) "
         "| Pinball P10 / P90 (MW) |",
