@@ -1,0 +1,55 @@
+name: afinar
+
+# Procura de hiperparâmetros só com semanas anteriores ao período de teste.
+# Sem efeitos laterais: o resultado vai para o log e para um artefacto; a escolha
+# é depois versionada à mão em src/eletricidade/hiperparametros.json e avaliada
+# com o workflow `avaliar`.
+on:
+  workflow_dispatch:
+    inputs:
+      ate:
+        description: Segunda-feira da primeira semana de teste (exclusiva)
+        default: "2025-11-03"
+      candidatas:
+        description: Configurações por alvo
+        default: "16"
+
+permissions:
+  contents: read
+
+jobs:
+  afinar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen
+
+      - name: Dados brutos (restaurar cache)
+        uses: actions/cache/restore@v5
+        with:
+          path: dados
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - name: Ingestão incremental (REN + Open-Meteo)
+        timeout-minutes: 75
+        run: uv run eletricidade ingest
+
+      - name: Procura
+        env:
+          ATE: ${{ inputs.ate }}
+          CANDIDATAS: ${{ inputs.candidatas }}
+        run: uv run eletricidade afinar --ate "$ATE" --candidatas "$CANDIDATAS"
+
+      - name: Resultados no log
+        run: |
+          for f in artefactos/afinacao.md artefactos/hiperparametros_escolhidos.json artefactos/afinacao.csv; do
+            if [ -f "$f" ]; then echo "=== $f"; cat "$f"; fi
+          done
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: afinacao
+          path: artefactos/
