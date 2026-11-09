@@ -313,6 +313,25 @@ Mesmas 52 semanas e mesmas horas:
 
 A eólica é a que mais ganha, porque depende quase só do vento previsto.
 
+#### Experiência: hiperparâmetros afinados sem ver o teste
+
+Procura aleatória (16 configurações por alvo; a configuração atual é sempre uma
+delas). Os parâmetros foram escolhidos só com 8 semanas de validação
+anteriores às 52 de teste (maio a outubro de 2025), cada uma treinada só com o
+seu passado (`eletricidade afinar`). Regra fixada antes de ver o teste: só se
+adota uma alteração com ganho de pelo menos 1 % na validação.
+
+| Alvo | Validação | Teste (52 semanas) |
+|---|---:|---:|
+| consumo | −2,7 % | 201 → 195 MW (**−3 %**) |
+| eolica | −2,0 % | 310 → 301 MW (**−3 %**) |
+| solar | −0,6 % (não adotado) | 112 MW (igual) |
+
+Os ganhos de teste confirmam os de validação. Custo: na eólica, os modelos de
+quantis ficaram com menos árvores, e o intervalo calibrado alargou de 887 para
+958 MW (D), com cobertura parecida. Os parâmetros estão versionados em
+`src/eletricidade/hiperparametros.json`.
+
 #### Experiência sem ganho: prever em fração da potência instalada
 
 Hipótese: a potência solar e eólica cresce, por isso um modelo treinado no
