@@ -74,7 +74,12 @@ def _todos_exemplos():
 
 def cmd_backtest(args) -> int:
     _, _, ex = _todos_exemplos()
-    previsoes = pd.concat([backtest.correr(ex[a], a, n_semanas=args.semanas) for a in config.ALVOS])
+    previsoes = pd.concat(
+        [
+            backtest.correr(ex[a], a, n_semanas=args.semanas, ultima_semana=args.ultima_semana)
+            for a in config.ALVOS
+        ]
+    )
     config.ARTEFACTOS.mkdir(parents=True, exist_ok=True)
     previsoes.to_parquet(config.ARTEFACTOS / "backtest_previsoes.parquet", index=False)
     resumo = backtest.resumir(previsoes)
@@ -208,6 +213,9 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("backtest", help="backtest semana a semana contra as referências")
     s.add_argument("--semanas", type=int, default=52)
+    s.add_argument(
+        "--ultima-semana", help="segunda-feira AAAA-MM-DD da última semana de teste (fixa a janela)"
+    )
     s.add_argument("--atualizar-readme", action="store_true")
     s.set_defaults(func=cmd_backtest)
 

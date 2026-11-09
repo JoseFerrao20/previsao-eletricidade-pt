@@ -10,6 +10,9 @@ on:
       semanas:
         description: Semanas de backtest
         default: "52"
+      ultima_semana:
+        description: Segunda-feira da última semana de teste (vazio = a mais recente)
+        default: ""
 
 permissions:
   contents: read
@@ -35,7 +38,8 @@ jobs:
       - name: Backtest
         env:
           SEMANAS: ${{ inputs.semanas }}
-        run: uv run eletricidade backtest --semanas "$SEMANAS"
+          ULTIMA: ${{ inputs.ultima_semana }}
+        run: uv run eletricidade backtest --semanas "$SEMANAS" ${ULTIMA:+--ultima-semana "$ULTIMA"}
 
       - name: Tabelas no log (para quem não pode descarregar artefactos)
         run: |

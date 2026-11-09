@@ -19,21 +19,36 @@ from .modelos import REFERENCIAS, ModeloLGBM, prever_referencia
 log = logging.getLogger(__name__)
 
 
-def semanas_teste(exemplos: pd.DataFrame, n_semanas: int) -> list[pd.Timestamp]:
-    """Segundas-feiras das últimas ``n_semanas`` semanas completas com valores reais."""
+def semanas_teste(
+    exemplos: pd.DataFrame, n_semanas: int, ultima_semana: pd.Timestamp | None = None
+) -> list[pd.Timestamp]:
+    """Segundas-feiras das últimas ``n_semanas`` semanas completas com valores reais.
+
+    ``ultima_semana`` (uma segunda-feira) fixa o fim, para comparar variantes do
+    modelo exatamente nas mesmas semanas mesmo que entretanto cheguem dados novos.
+    """
     # Última origem com o horizonte completo observado (D e D+1).
     ultima_origem = exemplos.dropna(subset=["y"])["dia"].max() - pd.Timedelta(days=1)
     ultimo_domingo = ultima_origem - pd.Timedelta(days=(ultima_origem.day_of_week - 6) % 7)
     segunda = ultimo_domingo - pd.Timedelta(days=6)
+    if ultima_semana is not None:
+        pedida = pd.Timestamp(ultima_semana)
+        if pedida.day_of_week != 0 or pedida > segunda:
+            raise ValueError(f"ultima_semana tem de ser uma segunda-feira até {segunda.date()}")
+        segunda = pedida
     return [segunda - pd.Timedelta(weeks=i) for i in reversed(range(n_semanas))]
 
 
 def correr(
-    exemplos: pd.DataFrame, alvo: str, n_semanas: int = 26, min_dias_treino: int = 180
+    exemplos: pd.DataFrame,
+    alvo: str,
+    n_semanas: int = 26,
+    min_dias_treino: int = 180,
+    ultima_semana: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     """Devolve previsões fora da amostra de todos os modelos, por linha de teste."""
     resultados = []
-    for segunda in semanas_teste(exemplos, n_semanas):
+    for segunda in semanas_teste(exemplos, n_semanas, ultima_semana):
         domingo = segunda + pd.Timedelta(days=6)
         treino = exemplos[(exemplos["dia"] < segunda) & exemplos["y"].notna()]
         teste = exemplos[
