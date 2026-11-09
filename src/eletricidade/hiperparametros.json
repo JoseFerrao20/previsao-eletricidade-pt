@@ -1,0 +1,19 @@
+{
+  "_nota": "Escolhidos por `eletricidade afinar --ate 2025-11-03` (8 semanas de validação, maio-outubro de 2025, todas antes do período de teste). Só se adota uma alteração com ganho >= 1 % na validação: o solar (-0,6 %) fica com os parâmetros globais.",
+  "consumo": {
+    "num_leaves": 31,
+    "learning_rate": 0.02,
+    "n_estimators": 1500,
+    "min_child_samples": 40,
+    "colsample_bytree": 0.5,
+    "reg_lambda": 0.0
+  },
+  "eolica": {
+    "num_leaves": 31,
+    "learning_rate": 0.02,
+    "n_estimators": 400,
+    "min_child_samples": 100,
+    "colsample_bytree": 1.0,
+    "reg_lambda": 0.0
+  }
+}
