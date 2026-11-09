@@ -313,6 +313,26 @@ Mesmas 52 semanas e mesmas horas:
 
 A eólica é a que mais ganha, porque depende quase só do vento previsto.
 
+#### Experiência sem ganho: prever em fração da potência instalada
+
+Hipótese: a potência solar e eólica cresce, por isso um modelo treinado no
+passado subestima o futuro. Era também a explicação provável para os ~40 % de
+horas de solar acima do P90 antes da calibração. Experiência: a eólica e o solar
+passaram a ser previstos como fração de um proxy da potência instalada (o
+máximo horário dos 90 dias anteriores), com peso igual a esse proxy para a perda
+continuar a ser o MAE em MW.
+
+| Alvo | MAE antes | MAE depois | Solar acima do P90 (sem calibrar) |
+|---|---:|---:|---:|
+| eolica | 310 MW | 309 MW | — |
+| solar | 112 MW | 113 MW | 41 % → 40 % |
+
+Sem ganho, e o desvio dos quantis ficou igual: a hipótese não explica o
+problema. A explicação mais provável passa a ser as horas noturnas e de
+alvorada, em que a produção real é de poucos MW e o P90 é 0. A calibração por
+hora já corrige isso. O código não entrou no `main` (ficou no branch
+`passo6-alvo-normalizado`): acrescentava complexidade sem benefício.
+
 ### Intervalos de previsão
 
 Além do valor central, cada previsão traz um intervalo a 80 % (P10–P90): um
