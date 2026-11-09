@@ -270,7 +270,7 @@ emissão:
 - mínima, máxima e média previstas do dia alvo;
 - graus-dia de aquecimento (base 16 °C) e de arrefecimento (base 22 °C);
 - inércia térmica: média e graus-dia de aquecimento dos 3 dias anteriores, da
-  corrida de 2 dias antes. Um teste garante que a inércia não usa a previsão do
+  corrida mais antiga do arquivo para esses dias. Um teste garante que a inércia não usa a previsão do
   próprio dia alvo.
 
 Mesmas 52 semanas e mesmas horas:
@@ -287,6 +287,31 @@ Mesmas 52 semanas e mesmas horas:
 Melhora em todas as estações e faixas de temperatura. O inverno continua a ser a
 época mais difícil. Nos feriados e nas pontes piora ligeiramente, mas as
 amostras são pequenas.
+
+#### Experiência: meteorologia mais fresca
+
+A regra inicial era deliberadamente conservadora: D usava a previsão feita 2
+dias antes e D+1 a de 3 dias antes, em todas as horas. A documentação do
+Open-Meteo diz que `previous_dayN` é o valor previsto N × 24 h antes da hora
+válida. Isso permite saber, hora a hora, que corridas já estavam publicadas à
+meia-noite de emissão T0. A regra nova usa, para cada hora t, o menor N com
+t − 24·N h + 8 h ≤ T0. As horas 0 a 16 de D passam a usar a previsão de 1 dia
+antes, e as de D+1 a de 2 dias antes; as restantes ficam como estavam.
+
+Um teste percorre todas as horas, incluindo os dias de mudança de hora, e
+verifica que nenhuma usa uma corrida publicada depois da emissão. Como
+verificação, a regra antiga correu no mesmo branch e reproduziu exatamente os
+números do `main` (207 / 355 / 120 MW): a nova descarga não mudou mais nada.
+
+Mesmas 52 semanas e mesmas horas:
+
+| Alvo | MAE antes | MAE depois | Variação |
+|---|---:|---:|---:|
+| eolica | 355 MW | 310 MW | **−13 %** |
+| solar | 120 MW | 112 MW | −7 % |
+| consumo | 207 MW | 201 MW | −3 % |
+
+A eólica é a que mais ganha, porque depende quase só do vento previsto.
 
 ### Intervalos de previsão
 
@@ -428,9 +453,11 @@ Conhecidas à partida:
   cada um é aprendido pelo modelo, não vem de dados de potência instalada por
   concelho.
 - Para garantir que nenhuma corrida meteorológica usada é posterior à emissão,
-  o alvo em D usa a previsão feita 2 dias antes e D+1 a feita 3 dias antes. Na
-  prática existem previsões mais frescas, por isso o erro reportado é
-  **conservador**: um sistema operacional poderia fazer um pouco melhor.
+  cada hora usa a corrida mais recente que já estava publicada à meia-noite de
+  D, com 8 h de margem para a publicação. É uma estimativa: se o Open-Meteo
+  publicar mais depressa, as horas da tarde também podiam usar uma corrida mais
+  recente. Nos dias de mudança de hora, a regra pode ficar 1 h mais
+  conservadora.
 - O arquivo de previsões do Open-Meteo só cobre bem 2024 em diante: o histórico
   de treino é curto (pouco mais de dois anos), sobretudo para eventos raros.
 - A potência instalada solar cresce depressa: modelos treinados no passado
