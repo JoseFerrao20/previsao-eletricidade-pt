@@ -39,7 +39,7 @@ def _variaveis_pedido() -> list[str]:
     return [f"{v}_previous_day{n}" for v in config.VARIAVEIS_METEO for n in sorted(LEAD_METEO.values())]
 
 
-def descarregar(inicio: date, fim: date, tentativas: int = 4) -> list[dict]:
+def descarregar(inicio: date, fim: date, tentativas: int = 6) -> list[dict]:
     """Um pedido para todos os pontos. Devolve uma lista (um elemento por ponto)."""
     params = {
         "latitude": ",".join(f"{p.lat}" for p in config.PONTOS),
@@ -50,13 +50,13 @@ def descarregar(inicio: date, fim: date, tentativas: int = 4) -> list[dict]:
         "timezone": "GMT",
         "wind_speed_unit": "ms",
     }
-    espera = 5.0
+    espera = 10.0  # 10, 20, 40, 80, 160 s: a API recusa por uns minutos quando está carregada
     for tentativa in range(1, tentativas + 1):
         try:
             resp = requests.get(
                 config.OPEN_METEO_PREVIOUS_RUNS,
                 params=params,
-                timeout=(15, 120),
+                timeout=(30, 180),
                 headers={"User-Agent": config.USER_AGENT},
             )
             resp.raise_for_status()
