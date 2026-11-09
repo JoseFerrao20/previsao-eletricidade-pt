@@ -54,7 +54,7 @@ jobs:
         run: |
           for f in artefactos/*.md artefactos/backtest_resumo.csv artefactos/backtest_por_lead.csv \
                    artefactos/backtest_segmentos.csv artefactos/backtest_intervalos.csv; do
-            [ -f "$f" ] && { echo "=== $f"; cat "$f"; }
+            if [ -f "$f" ]; then echo "=== $f"; cat "$f"; fi
           done
 
       - uses: actions/upload-artifact@v6
