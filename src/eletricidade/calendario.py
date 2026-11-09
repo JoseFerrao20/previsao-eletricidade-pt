@@ -43,3 +43,59 @@ def features_calendario(dias: pd.Series, horas: pd.Series) -> pd.DataFrame:
         },
         index=dias.index,
     ).drop(columns="hora")
+
+
+LIMITE_DIAS = 7  # distância a feriados: além de uma semana não interessa
+
+
+@cache
+def _feriados_ordenados() -> np.ndarray:
+    datas = sorted(d for ano in range(2023, 2032) for d in _feriados(ano))
+    return np.array(datas, dtype="datetime64[D]")
+
+
+def _pascoa(ano: int) -> pd.Timestamp:
+    """Domingo de Páscoa (algoritmo anónimo gregoriano)."""
+    a, b, c = ano % 19, ano // 100, ano % 100
+    d, e = b // 4, b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l_ = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l_) // 451
+    mes = (h + l_ - 7 * m + 114) // 31
+    dia = (h + l_ - 7 * m + 114) % 31 + 1
+    return pd.Timestamp(ano, mes, dia)
+
+
+def features_calendario_consumo(dias: pd.Series) -> pd.DataFrame:
+    """Calendário alargado para o consumo (só datas determinísticas, nada estimado).
+
+    - dias até ao próximo feriado nacional e desde o último (0 = é feriado; limite 7);
+    - período de Natal e Ano Novo (24/12 a 1/1) e vésperas (24/12 e 31/12);
+    - grandes feriados municipais: Santo António em Lisboa (13/6) e São João no Porto (24/6);
+    - Carnaval (terça-feira, Páscoa − 47 dias): facultativo, mas muito observado.
+    As férias escolares ficam de fora: o calendário oficial muda todos os anos.
+    """
+    datas = pd.to_datetime(dias).dt.normalize()
+    d64 = datas.to_numpy(dtype="datetime64[D]")
+    fer = _feriados_ordenados()
+    pos = np.searchsorted(fer, d64, side="left")
+    seguinte = fer[np.clip(pos, 0, len(fer) - 1)]
+    anterior = fer[np.clip(np.searchsorted(fer, d64, side="right") - 1, 0, len(fer) - 1)]
+    ate = (seguinte - d64).astype(int)
+    desde = (d64 - anterior).astype(int)
+    mes, dia = datas.dt.month, datas.dt.day
+    carnaval = datas.apply(lambda d: d == _pascoa(d.year) - pd.Timedelta(days=47))
+    return pd.DataFrame(
+        {
+            "dias_ate_feriado": np.clip(np.where(ate < 0, LIMITE_DIAS, ate), 0, LIMITE_DIAS),
+            "dias_desde_feriado": np.clip(np.where(desde < 0, LIMITE_DIAS, desde), 0, LIMITE_DIAS),
+            "periodo_natal": (((mes == 12) & (dia >= 24)) | ((mes == 1) & (dia == 1))).astype(int),
+            "vespera_natal_ano_novo": ((mes == 12) & dia.isin([24, 31])).astype(int),
+            "feriado_municipal_grande": ((mes == 6) & dia.isin([13, 24])).astype(int),
+            "carnaval": carnaval.astype(int),
+        },
+        index=dias.index,
+    )

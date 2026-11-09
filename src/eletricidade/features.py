@@ -166,6 +166,8 @@ def construir_exemplos(
     exemplos["dia"] = pd.to_datetime(exemplos["dia"])
     exemplos["origem"] = exemplos["dia"] - pd.to_timedelta(exemplos["lead"] - 1, unit="D")
     exemplos = exemplos.join(calendario.features_calendario(exemplos["dia"], exemplos["hora"]))
+    if alvo == "consumo" and config.CALENDARIO_ALARGADO:
+        exemplos = exemplos.join(calendario.features_calendario_consumo(exemplos["dia"]))
     # Descarta só o aquecimento inicial (janelas de 30 dias incompletas). Linhas
     # posteriores com lags em falta ficam: o LightGBM lida com NaN e o backtest
     # avalia todos os modelos apenas nas linhas em que todos têm previsão.

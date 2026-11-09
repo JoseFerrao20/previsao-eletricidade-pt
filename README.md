@@ -357,6 +357,44 @@ Mesmas 52 semanas e mesmas horas:
 Os intervalos da eólica também ficaram mais estreitos (958 → 888 MW em D), com a
 mesma cobertura. A primeira ingestão dos três modelos demora cerca de 1 h.
 
+#### Experiência: calendário alargado no consumo
+
+Até aqui, o modelo de consumo só sabia se o dia era feriado, ponte ou fim de
+semana. Passou a receber também (`src/eletricidade/calendario.py`, só no
+consumo):
+- dias até ao próximo feriado e desde o último (limitados a 7), porque a
+  semana à volta de um feriado já consome de forma diferente;
+- período de Natal (24/12 a 1/1) e as vésperas de Natal e de Ano Novo;
+- Santo António (13/6) e São João (24/6), feriados municipais de Lisboa e do
+  Porto, com peso nacional;
+- Carnaval (terça-feira, 47 dias antes da Páscoa): não é feriado nacional, mas
+  é tolerância em muitos sítios.
+
+As férias escolares ficaram de fora, porque não foi possível confirmar aqui o
+calendário oficial de cada ano.
+
+Mesmas 52 semanas e mesmas horas (a eólica e o solar não mudam: 262 e 111 MW):
+
+| Consumo, segmento | n | MAE antes | MAE depois | Variação |
+|---|---:|---:|---:|---:|
+| **Total** | 17456 | 195 MW | 184 MW | **−5,6 %** |
+| dia útil | 11896 | 197 | 184 | −6,6 % |
+| fim de semana | 4796 | 182 | 177 | −2,7 % |
+| feriado | 620 | 232 | 220 | −4,9 % |
+| ponte | 144 | 279 | 267 | −4,2 % |
+| inverno | 4320 | 309 | 284 | −8,1 % |
+| primavera | 4400 | 154 | 143 | −7,1 % |
+| verão | 4416 | 162 | 156 | −3,3 % |
+| outono | 4320 | 156 | 154 | −0,9 % |
+| < 10 °C | 1712 | 262 | 230 | −12,0 % |
+| ≥ 28 °C | 534 | 233 | 234 | +0,5 % |
+
+O ganho não vem só dos dias especiais: os dias úteis melhoram tanto como os
+feriados, sobretudo no inverno, onde estão o Natal e as semanas à volta dos
+feriados de dezembro. Os segmentos de feriado e ponte continuam pequenos (só
+um ano), por isso a variação neles deve ser lida com cautela; o critério de
+adoção foi o MAE total.
+
 #### Experiência sem ganho: prever em fração da potência instalada
 
 Hipótese: a potência solar e eólica cresce, por isso um modelo treinado no
@@ -545,6 +583,8 @@ Conhecidas à partida:
   conservadora.
 - O arquivo de previsões do Open-Meteo só cobre bem 2024 em diante: o histórico
   de treino é curto (pouco mais de dois anos), sobretudo para eventos raros.
+- O calendário do consumo não inclui férias escolares: o calendário oficial
+  não foi verificado e não se inventam datas.
 - A potência instalada solar cresce depressa: modelos treinados no passado
   subestimam o futuro. É uma das razões para o retreino frequente.
 - Termos de utilização: o REN Data Hub não publica licença de reutilização.
