@@ -51,12 +51,15 @@ def cmd_ingest(args) -> int:
     longo = meteo.construir_horario()
     longo.to_parquet(config.FICH_METEO_HORARIO, index=False)
     resumo = meteo.resumo_por_ponto(longo)
-    _resumo_github(
+    texto_meteo = (
         "## Meteorologia prevista por ponto (D, todo o histórico)\n\n"
         "Média e percentis 10/50/90. Vento a 100 m em m/s, radiação em W/m², nebulosidade em %.\n\n"
         + _markdown_simples(resumo.reset_index())
         + "\n"
     )
+    config.ARTEFACTOS.mkdir(parents=True, exist_ok=True)
+    (config.ARTEFACTOS / "meteo_por_ponto.md").write_text(texto_meteo, encoding="utf-8")
+    _resumo_github(texto_meteo)
     graves = {d: e for d, e in falhas.items() if not ren.e_dia_mudanca_hora(d) and d < hoje}
     log.info("REN: %d horas, de %s a %s", len(horario), horario.index.min(), horario.index.max())
     for d, e in falhas.items():
