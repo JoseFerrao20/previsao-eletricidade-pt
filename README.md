@@ -378,6 +378,27 @@ Com cobertura parecida, os intervalos do modelo têm entre um quarto e metade
 da largura dos do naive. No consumo ficam ainda um pouco abaixo dos 80 %
 nominais.
 
+**Experiência sem ganho: calibração adaptativa (ACI).** A calibração estática
+deixa o consumo em ~77 % de cobertura, abaixo dos 80 %. Testou-se a calibração
+conformal adaptativa (Gibbs & Candès, 2021): o nível do quantil de cada lado é
+corrigido semana a semana pela taxa de falhas da semana anterior, com o passo
+(0,5) fixado à partida. Resultado (D, mesmas 52 semanas):
+
+| Alvo | Cobertura estática → adaptativa | Pinball P10/P90 estática → adaptativa |
+|---|---:|---:|
+| consumo | 77,0 % → 75,2 % | 52/47 → 59/53 |
+| eolica | 77,2 % → 79,9 % | 60/75 → 61/77 |
+| solar | 81,4 % → 79,8 % | 29/25 → 31/25 |
+
+Na eólica e no solar, a cobertura fica quase exatamente nos 80 %. No consumo,
+que era o objetivo, piora, mesmo com intervalos mais largos. A explicação mais
+provável é que os erros do consumo vêm em choques (vagas de frio, semanas com
+feriados) que a semana anterior não antecipa, e a correção chega atrasada. A
+pinball loss, a métrica que equilibra acertar e ser estreito, piora nos três
+alvos. Ficou a calibração estática. Escolher a adaptativa só para a eólica e o
+solar, depois de ver estes números, seria escolher pelo teste; o código ficou no
+branch `passo9-calibracao-adaptativa`.
+
 <!-- INTERVALOS:INICIO -->
 Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas 52 semanas, menos as 4 primeiras (precisam de erros passados para calibrar). Um intervalo bem calibrado contém o valor real em ~80 % das horas, com ~10 % de cada lado; entre intervalos calibrados, o mais estreito é melhor (menor pinball). *Calibrado*: cada limite deslocado pelo quantil 90 % dos erros das 12 semanas anteriores, por alvo, horizonte e hora (calibração conformal).
 
