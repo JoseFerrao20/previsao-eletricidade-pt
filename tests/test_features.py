@@ -126,3 +126,51 @@ def test_meteo_continua_quando_um_mes_falha(tmp_path, monkeypatch):
     with pytest.raises(meteo.ErroMeteo, match="1 meses falharam"):
         meteo.atualizar(date(2024, 1, 1), date(2024, 3, 31), raiz=tmp_path)
     assert sorted(f.stem for f in tmp_path.glob("*.json")) == ["2024-01", "2024-03"]
+
+
+def _meteo_temperatura(dias: int = 20, f=None) -> pd.DataFrame:
+    """Temperatura sintética constante por dia local e lead: f(dia, lead)."""
+    f = f or (lambda d, lead: 10.0 + d + 100 * (lead - 1))
+    ts = pd.date_range("2025-01-01", periods=dias * 24, freq="1h", tz="Europe/Lisbon").tz_convert("UTC")
+    dia_local = (
+        ts.tz_convert("Europe/Lisbon").normalize().tz_localize(None) - pd.Timestamp("2025-01-01")
+    ).days
+    partes = []
+    for lead in (1, 2):
+        idx = pd.MultiIndex.from_arrays([ts, [lead] * len(ts)], names=["ts_utc", "lead_dias"])
+        partes.append(pd.DataFrame({"populacao__temperature_2m": [f(d, lead) for d in dia_local]}, index=idx))
+    return pd.concat(partes).sort_index()
+
+
+def test_features_termicas_valores_e_inercia():
+    meteo_t = _meteo_temperatura()
+    t2 = features.features_termicas(meteo_t, lead=2)
+    dia = pd.Timestamp("2025-01-10")  # d = 9
+    linha = t2.loc[(dia, 13)]
+    assert linha["temp_media_dia"] == pytest.approx(10 + 9 + 100)  # corrida do lead 2
+    # inércia: dias 6, 7 e 8 da corrida de lead 1
+    assert linha["temp_media_3d_antes"] == pytest.approx(10 + 7)
+    esperado = np.mean([max(0.0, 16 - (10 + k)) for k in (6, 7, 8)])
+    assert linha["graus_aquecimento_3d_antes"] == pytest.approx(esperado)
+    assert (t2.loc[dia]["temp_min_dia"] == 10 + 9 + 100).all()
+
+
+def test_features_termicas_sem_fuga_do_dia_alvo():
+    """Mudar a corrida de lead 1 a partir do dia alvo não muda a inércia desse dia."""
+    base = features.features_termicas(_meteo_temperatura(), lead=1)
+    alterada = features.features_termicas(
+        _meteo_temperatura(f=lambda d, lead: 999.0 if d >= 9 else 10.0 + d + 100 * (lead - 1)), lead=1
+    )
+    dia = pd.Timestamp("2025-01-10")
+    cols = ["temp_media_3d_antes", "graus_aquecimento_3d_antes"]
+    pd.testing.assert_frame_equal(base.loc[dia, cols], alterada.loc[dia, cols])
+    assert (alterada.loc[dia, "temp_media_dia"] == 999.0).all()  # o próprio dia usa a sua previsão
+
+
+def test_consumo_recebe_features_termicas(horario_sintetico):
+    grupos = meteo.agregar_por_grupo(meteo.interpretar(payload_meteo("2024-01-01", "2024-03-01")))
+    grade = features.para_grade_local(horario_sintetico)
+    ex = features.construir_exemplos(grade, grupos, "consumo")
+    fev = ex[(ex["dia"] >= "2024-02-05") & (ex["dia"] < "2024-02-28")]
+    assert fev["temp_media_dia"].notna().all() and fev["temp_media_3d_antes"].notna().all()
+    assert "temp_media_dia" not in features.construir_exemplos(grade, grupos, "eolica")

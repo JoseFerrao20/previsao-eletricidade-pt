@@ -88,6 +88,57 @@ def features_meteo(meteo_grupos_utc: pd.DataFrame, alvo: str, lead: int) -> pd.D
     return grade
 
 
+COLUNA_TEMPERATURA = "populacao__temperature_2m"
+BASE_AQUECIMENTO = 16.0  # °C: abaixo disto conta como necessidade de aquecimento
+BASE_ARREFECIMENTO = 22.0  # °C: acima disto conta como necessidade de arrefecimento
+
+
+def _temperatura_por_dia(meteo_grupos_utc: pd.DataFrame, lead: int) -> pd.DataFrame:
+    """Matriz dia × hora (local) da temperatura prevista na corrida do lead dado."""
+    sub = meteo_grupos_utc.xs(lead, level="lead_dias")[[COLUNA_TEMPERATURA]]
+    sub.index = pd.DatetimeIndex(sub.index)
+    if sub.index.tz is None:
+        sub.index = sub.index.tz_localize("UTC")
+    m = para_grade_local(sub)[COLUNA_TEMPERATURA].unstack("hora")
+    m.index = pd.DatetimeIndex(m.index)
+    return m.reindex(pd.date_range(m.index.min(), m.index.max(), freq="D"))
+
+
+def features_termicas(meteo_grupos_utc: pd.DataFrame, lead: int) -> pd.DataFrame:
+    """Features de temperatura ao nível do dia, para o consumo.
+
+    Do próprio dia alvo (corrida do lead, conhecida na emissão): mínima, máxima,
+    média e graus-dia de aquecimento e de arrefecimento. Inércia térmica: média e
+    graus-dia de aquecimento dos 3 dias anteriores ao dia alvo, sempre da corrida de
+    lead 1 (previous_day2), que para esses dias já estava publicada antes da emissão
+    (para D+1, o dia anterior é D, previsto 2 dias antes de D).
+    """
+    m = _temperatura_por_dia(meteo_grupos_utc, lead)
+    hdd = (BASE_AQUECIMENTO - m).clip(lower=0).mean(axis=1)
+    diario = pd.DataFrame(
+        {
+            "temp_min_dia": m.min(axis=1),
+            "temp_max_dia": m.max(axis=1),
+            "temp_media_dia": m.mean(axis=1),
+            "graus_aquecimento_dia": hdd,
+            "graus_arrefecimento_dia": (m - BASE_ARREFECIMENTO).clip(lower=0).mean(axis=1),
+        }
+    )
+    m1 = _temperatura_por_dia(meteo_grupos_utc, 1)
+    media1 = m1.mean(axis=1)
+    hdd1 = (BASE_AQUECIMENTO - m1).clip(lower=0).mean(axis=1)
+    # dia alvo X: dias X-1, X-2, X-3 (shift por datas, não por posição)
+    anteriores = pd.DataFrame({k: media1.shift(k, freq="D") for k in (1, 2, 3)}).reindex(diario.index)
+    diario["temp_media_3d_antes"] = anteriores.mean(axis=1)
+    diario["graus_aquecimento_3d_antes"] = (
+        pd.DataFrame({k: hdd1.shift(k, freq="D") for k in (1, 2, 3)}).reindex(diario.index).mean(axis=1)
+    )
+    diario.index.name = "dia"
+    grade = diario.loc[diario.index.repeat(24)].copy()
+    grade["hora"] = np.tile(np.arange(24), len(diario))
+    return grade.set_index("hora", append=True)
+
+
 def construir_exemplos(
     grade_ren: pd.DataFrame,
     meteo_grupos_utc: pd.DataFrame | None,
@@ -104,6 +155,8 @@ def construir_exemplos(
         tabela = features_historicas(grade_ren, alvo, lead, ate)
         if meteo_grupos_utc is not None:
             tabela = tabela.join(features_meteo(meteo_grupos_utc, alvo, lead), how="left")
+            if alvo == "consumo" and COLUNA_TEMPERATURA in meteo_grupos_utc:
+                tabela = tabela.join(features_termicas(meteo_grupos_utc, lead), how="left")
         partes.append(tabela)
     exemplos = pd.concat(partes).reset_index()
     exemplos["dia"] = pd.to_datetime(exemplos["dia"])
