@@ -142,7 +142,8 @@ def tabela_intervalos_markdown(t: pd.DataFrame) -> str:
     ]
     for _, r in t.iterrows():
         linhas.append(
-            f"| {r['alvo']} | {'D' if r['lead'] == 1 else 'D+1'} | {nomes[r['modelo']]} | {r['cobertura']:.1f}% "
+            f"| {r['alvo']} | {'D' if r['lead'] == 1 else 'D+1'} | {nomes[r['modelo']]} "
+            f"| {r['cobertura']:.1f}% "
             f"| {r['abaixo']:.1f}% / {r['acima']:.1f}% | {r['largura']:.0f} "
             f"| {r['pinball_baixo']:.0f} / {r['pinball_alto']:.0f} |"
         )
