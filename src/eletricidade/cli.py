@@ -60,7 +60,10 @@ def cmd_ingest(args) -> int:
     config.ARTEFACTOS.mkdir(parents=True, exist_ok=True)
     (config.ARTEFACTOS / "meteo_por_ponto.md").write_text(texto_meteo, encoding="utf-8")
     _resumo_github(texto_meteo)
-    graves = {d: e for d, e in falhas.items() if not ren.e_dia_mudanca_hora(d) and d < hoje}
+    # Graves: buracos no histórico. O dia anterior (D-1) pode ainda não estar publicado:
+    # isso não pára o workflow; é o `prever` que decide se emite ou adia.
+    ontem = hoje - timedelta(days=1)
+    graves = {d: e for d, e in falhas.items() if not ren.e_dia_mudanca_hora(d) and d < ontem}
     log.info("REN: %d horas, de %s a %s", len(horario), horario.index.min(), horario.index.max())
     for d, e in falhas.items():
         log.warning("Falha %s: %s", d, e)
@@ -174,9 +177,28 @@ def cmd_treinar(args) -> int:
 
 def cmd_prever(args) -> int:
     origem = pd.Timestamp(args.origem or _hoje_local())
-    previsao = producao.prever(origem, producao.carregar_grade(), producao.carregar_meteo())
+    existente = producao.caminho_previsao(origem)
+    if existente.exists() and not args.forcar:
+        # A primeira emissão é a que conta: uma reemissão mais tarde poderia usar um
+        # modelo retreinado com valores do próprio dia D (fuga na avaliação realizada).
+        log.info("Já existe a previsão de %s (%s); nada a fazer", origem.date(), existente)
+        _resumo_github(f"Previsão de {origem.date()} já emitida; mantida a primeira emissão.\n")
+        return 0
+    grade = producao.carregar_grade()
+    ontem = origem - pd.Timedelta(days=1)
+    if not producao.dia_completo(grade, ontem):
+        if not args.aceitar_incompleto:
+            # Como a primeira emissão fica, emitir agora com lags em falta seria definitivo.
+            log.warning("Dados de %s incompletos: previsão adiada para a próxima tentativa", ontem.date())
+            _resumo_github(f"Dados de {ontem.date()} incompletos na REN: previsão adiada.\n")
+            return 0
+        log.warning("Dados de %s incompletos: emitida mesmo assim (última tentativa)", ontem.date())
+        _resumo_github(f"⚠️ Dados de {ontem.date()} incompletos: previsão emitida com lags em falta.\n")
+    previsao = producao.prever(origem, grade, producao.carregar_meteo())
     destino = producao.guardar_previsao(previsao)
-    log.info("Previsão guardada em %s", destino)
+    atraso = producao.atraso_emissao_horas(previsao)
+    log.info("Previsão guardada em %s (emitida %.1f h depois da meia-noite de Lisboa)", destino, atraso)
+    _resumo_github(f"Previsão de {origem.date()} emitida {atraso:.1f} h depois da meia-noite de Lisboa.\n")
     return 0
 
 
@@ -195,6 +217,7 @@ def cmd_monitorizar(args) -> int:
     if realizadas.empty:
         realizadas = pd.DataFrame(columns=["alvo", "dia", "hora", "lead", "y", *monitor.MODELOS_MONITOR])
     relatorio = monitor.avaliar(realizadas, exemplos, metas, hoje)
+    relatorio["emissao"] = monitor.atrasos_emissao(previsoes)
     hist = monitor.historico_erro(realizadas) if len(realizadas) else pd.DataFrame()
     monitor.guardar(relatorio, hist)
     md = monitor.markdown(relatorio)
@@ -245,6 +268,12 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("prever", help="emite a previsão de 48 h")
     s.add_argument("--origem", help="AAAA-MM-DD (por omissão, hoje em Lisboa)")
+    s.add_argument("--forcar", action="store_true", help="substitui uma previsão já emitida para a origem")
+    s.add_argument(
+        "--aceitar-incompleto",
+        action="store_true",
+        help="emite mesmo que o dia anterior esteja incompleto (última tentativa da madrugada)",
+    )
     s.set_defaults(func=cmd_prever)
 
     sub.add_parser("monitorizar", help="erro realizado, drift e alertas").set_defaults(func=cmd_monitorizar)

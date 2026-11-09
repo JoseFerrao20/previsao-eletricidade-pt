@@ -135,8 +135,11 @@ function vazio(id, txt) { document.getElementById(id).innerHTML = `<p class="vaz
 function desenhar() {
   if (!DADOS) { vazio("g-serie", "Ainda sem dados."); return; }
   const b = DADOS.alvos[alvo];
+  const emissao = b.emitida_em
+    ? ` A última foi emitida a ${b.emitida_em} (${b.atraso_horas.toLocaleString("pt-PT")} h depois da meia-noite: o agendamento do GitHub Actions atrasa).`
+    : "";
   document.getElementById("sub").textContent =
-    `Previsões a 48 h emitidas à meia-noite (hora de Lisboa). Atualizado ${DADOS.gerado_em}.`;
+    `Previsões a 48 h com a informação disponível à meia-noite (hora de Lisboa).${emissao} Atualizado ${DADOS.gerado_em}.`;
   document.getElementById("t-serie").textContent = `${b.nome}: real e previsto (MW)`;
   const m = b.monitor;
   const est = document.getElementById("estado");

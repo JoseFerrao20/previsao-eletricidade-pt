@@ -142,3 +142,63 @@ def test_drift_e_aviso_e_nao_dispara_retreino():
     info = rel["alvos"]["eolica"]
     assert info["avisos"] and not info["sinais"]
     assert not rel["alerta"] and not rel["retreinar"]
+
+
+def test_primeira_emissao_e_a_que_conta(estado, horario_sintetico, monkeypatch):
+    """O CLI não reemite uma previsão já guardada (salvo --forcar) e regista a hora de emissão."""
+    from argparse import Namespace
+
+    from eletricidade import cli
+
+    grade = features.para_grade_local(horario_sintetico)
+    passado = grade[pd.to_datetime(grade.index.get_level_values("dia")) < pd.Timestamp("2025-04-01")]
+    for alvo in config.ALVOS:
+        r = producao.treinar_e_promover(
+            alvo, features.construir_exemplos(passado, None, alvo), semanas_gate=2
+        )
+        if not r["promovido"]:
+            registo.promover(alvo, r["versao"], "teste")
+    monkeypatch.setattr(producao, "carregar_grade", lambda: grade)
+    monkeypatch.setattr(producao, "carregar_meteo", lambda: None)
+
+    args = Namespace(origem="2025-04-01", forcar=False, aceitar_incompleto=False)
+    assert cli.cmd_prever(args) == 0
+    destino = producao.caminho_previsao(pd.Timestamp("2025-04-01"))
+    primeira = pd.read_parquet(destino)
+    assert primeira["emitida_em"].notna().all()
+    assert cli.cmd_prever(args) == 0  # segunda vez: não reescreve
+    pd.testing.assert_frame_equal(pd.read_parquet(destino), primeira)
+    assert cli.cmd_prever(Namespace(origem="2025-04-01", forcar=True, aceitar_incompleto=False)) == 0
+    assert pd.read_parquet(destino)["emitida_em"].iloc[0] >= primeira["emitida_em"].iloc[0]
+
+    atrasos = monitor.atrasos_emissao(monitor.carregar_previsoes())
+    assert atrasos["ultima_origem"] == "2025-04-01" and atrasos["atraso_ultima_h"] > 24 * 300
+
+
+def test_previsao_adiada_se_o_dia_anterior_estiver_incompleto(estado, horario_sintetico, monkeypatch):
+    from argparse import Namespace
+
+    from eletricidade import cli
+
+    grade = features.para_grade_local(horario_sintetico)
+    passado = grade[pd.to_datetime(grade.index.get_level_values("dia")) < pd.Timestamp("2025-04-01")]
+    for alvo in config.ALVOS:
+        r = producao.treinar_e_promover(
+            alvo, features.construir_exemplos(passado, None, alvo), semanas_gate=2
+        )
+        if not r["promovido"]:
+            registo.promover(alvo, r["versao"], "teste")
+    incompleta = grade.copy()
+    dias = pd.to_datetime(incompleta.index.get_level_values("dia"))
+    horas = incompleta.index.get_level_values("hora")
+    incompleta.loc[(dias == pd.Timestamp("2025-03-31")) & (horas >= 20), "consumo"] = np.nan
+    assert not producao.dia_completo(incompleta, pd.Timestamp("2025-03-31"))
+    assert producao.dia_completo(grade, pd.Timestamp("2025-03-31"))
+    monkeypatch.setattr(producao, "carregar_grade", lambda: incompleta)
+    monkeypatch.setattr(producao, "carregar_meteo", lambda: None)
+    destino = producao.caminho_previsao(pd.Timestamp("2025-04-01"))
+
+    assert cli.cmd_prever(Namespace(origem="2025-04-01", forcar=False, aceitar_incompleto=False)) == 0
+    assert not destino.exists()  # adiada: não fica bloqueada uma emissão com lags em falta
+    assert cli.cmd_prever(Namespace(origem="2025-04-01", forcar=False, aceitar_incompleto=True)) == 0
+    assert destino.exists()

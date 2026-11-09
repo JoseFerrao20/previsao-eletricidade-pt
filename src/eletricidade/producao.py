@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo
+from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo, ren
 from .modelos import REFERENCIAS, ModeloLGBM
 
 log = logging.getLogger(__name__)
@@ -92,6 +92,17 @@ def treinar_e_promover(alvo: str, ex: pd.DataFrame, semanas_gate: int = 4, raiz:
     }
 
 
+def dia_completo(grade: pd.DataFrame, dia: pd.Timestamp) -> bool:
+    """Todas as horas do dia com valor em todos os alvos (no dia em que a hora avança, 23)."""
+    dias = pd.to_datetime(grade.index.get_level_values("dia"))
+    bloco = grade[dias == pd.Timestamp(dia).normalize()][list(config.ALVOS)]
+    if bloco.empty:
+        return False
+    horas_validas = bloco.dropna(how="any")
+    esperado = 23 if ren.e_dia_mudanca_hora(pd.Timestamp(dia).date()) else 24
+    return len(horas_validas) >= esperado
+
+
 def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = None) -> pd.DataFrame:
     """Previsão horária para D e D+1 emitida à meia-noite local de ``origem`` (= D)."""
     origem = pd.Timestamp(origem).normalize()
@@ -123,7 +134,13 @@ def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = No
         for nome in REFERENCIAS:
             bloco[nome] = ex[REFERENCIAS[nome]].to_numpy()
         partes.append(bloco)
-    return pd.concat(partes, ignore_index=True)
+    saida = pd.concat(partes, ignore_index=True)
+    saida["emitida_em"] = pd.Timestamp.now(tz="UTC")
+    return saida
+
+
+def caminho_previsao(origem: pd.Timestamp, pasta: Path | None = None) -> Path:
+    return (pasta or config.DIR_PREVISOES) / f"{pd.Timestamp(origem):%Y-%m-%d}.parquet"
 
 
 FICH_CALIBRACAO = "backtest_calibracao_intervalos.csv"
@@ -145,8 +162,16 @@ def calibrar_intervalos(previsao: pd.DataFrame, pasta: Path | None = None) -> pd
 
 
 def guardar_previsao(previsao: pd.DataFrame, pasta: Path | None = None) -> Path:
-    pasta = pasta or config.DIR_PREVISOES
-    pasta.mkdir(parents=True, exist_ok=True)
-    destino = pasta / f"{previsao['origem'].iloc[0]:%Y-%m-%d}.parquet"
+    destino = caminho_previsao(previsao["origem"].iloc[0], pasta)
+    destino.parent.mkdir(parents=True, exist_ok=True)
     previsao.to_parquet(destino, index=False)
     return destino
+
+
+def atraso_emissao_horas(previsao: pd.DataFrame) -> float:
+    """Horas entre a meia-noite de Lisboa da origem e o momento real da emissão."""
+    if "emitida_em" not in previsao or previsao["emitida_em"].isna().all():
+        return float("nan")
+    meia_noite = pd.Timestamp(previsao["origem"].iloc[0]).tz_localize(config.FUSO)
+    emitida = pd.Timestamp(previsao["emitida_em"].iloc[0])
+    return (emitida - meia_noite).total_seconds() / 3600
