@@ -12,7 +12,20 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from . import analise, backtest, config, features, intervalos, meteo, monitor, painel, producao, registo, ren
+from . import (
+    afinar,
+    analise,
+    backtest,
+    config,
+    features,
+    intervalos,
+    meteo,
+    monitor,
+    painel,
+    producao,
+    registo,
+    ren,
+)
 
 log = logging.getLogger("eletricidade")
 
@@ -154,6 +167,39 @@ def _substituir_bloco(texto: str, nome: str, conteudo: str) -> str:
     return re.sub(padrao, lambda m: m.group(1) + conteudo + m.group(2), texto, flags=re.S)
 
 
+def cmd_afinar(args) -> int:
+    _, _, ex = _todos_exemplos()
+    alvos = [args.alvo] if args.alvo else list(config.ALVOS)
+    escolhidos, partes, linhas_md = {}, [], []
+    for alvo in alvos:
+        t = afinar.procurar(ex[alvo], alvo, pd.Timestamp(args.ate), args.semanas, args.candidatas)
+        partes.append(t)
+        base = float(t.loc[t["candidata"] == 0, "MAE_validacao"].iloc[0])
+        melhor = t.iloc[0]
+        escolhidos[alvo] = melhor["ajuste"]
+        linhas_md.append(
+            f"| {alvo} | {base:.0f} | {melhor['MAE_validacao']:.0f} "
+            f"| {100 * (melhor['MAE_validacao'] / base - 1):+.1f}% | `{json.dumps(melhor['ajuste'])}` |"
+        )
+    config.ARTEFACTOS.mkdir(parents=True, exist_ok=True)
+    tabela = pd.concat(partes, ignore_index=True)
+    tabela.assign(ajuste=tabela["ajuste"].map(json.dumps)).to_csv(
+        config.ARTEFACTOS / "afinacao.csv", index=False
+    )
+    texto = (
+        f"Semanas de validação (todas antes de {args.ate}): {', '.join(partes[0].attrs['semanas'])}.\n\n"
+        "| Alvo | MAE atual | MAE da melhor | Variação | Ajuste |\n|---|---:|---:|---:|---|\n"
+        + "\n".join(linhas_md)
+    )
+    (config.ARTEFACTOS / "afinacao.md").write_text(texto + "\n", encoding="utf-8")
+    (config.ARTEFACTOS / "hiperparametros_escolhidos.json").write_text(
+        json.dumps(escolhidos, indent=2) + "\n", encoding="utf-8"
+    )
+    print(texto)
+    _resumo_github("## Afinação de hiperparâmetros\n\n" + texto)
+    return 0
+
+
 def cmd_treinar(args) -> int:
     _, _, ex = _todos_exemplos()
     alvos = [args.alvo] if args.alvo else list(config.ALVOS)
@@ -275,6 +321,13 @@ def main(argv: list[str] | None = None) -> int:
         help="emite mesmo que o dia anterior esteja incompleto (última tentativa da madrugada)",
     )
     s.set_defaults(func=cmd_prever)
+
+    s = sub.add_parser("afinar", help="procura de hiperparâmetros só com semanas anteriores ao teste")
+    s.add_argument("--ate", required=True, help="segunda-feira da primeira semana de teste (exclusiva)")
+    s.add_argument("--semanas", type=int, default=8, help="semanas de validação")
+    s.add_argument("--candidatas", type=int, default=16)
+    s.add_argument("--alvo", choices=config.ALVOS)
+    s.set_defaults(func=cmd_afinar)
 
     sub.add_parser("monitorizar", help="erro realizado, drift e alertas").set_defaults(func=cmd_monitorizar)
     sub.add_parser("painel", help="gera o painel estático").set_defaults(func=cmd_painel)

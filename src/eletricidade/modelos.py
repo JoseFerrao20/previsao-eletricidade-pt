@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import lightgbm as lgb
 import numpy as np
@@ -40,9 +42,21 @@ QUANTIS = (0.1, 0.9)
 COBERTURA_NOMINAL = QUANTIS[1] - QUANTIS[0]
 
 
-def _parametros_quantil(alfa: float) -> dict:
+# Ajustes por alvo escolhidos por `eletricidade afinar` (só com semanas anteriores ao
+# período de teste) e versionados em hiperparametros.json.
+FICH_HIPERPARAMETROS = Path(__file__).with_name("hiperparametros.json")
+
+
+def parametros_para(alvo: str) -> dict:
     p = dict(PARAMETROS_LGBM)
-    p.update({"objective": "quantile", "alpha": alfa, "n_estimators": 400})
+    if FICH_HIPERPARAMETROS.exists():
+        p.update(json.loads(FICH_HIPERPARAMETROS.read_text(encoding="utf-8")).get(alvo, {}))
+    return p
+
+
+def _parametros_quantil(base: dict, alfa: float) -> dict:
+    p = dict(base)
+    p.update({"objective": "quantile", "alpha": alfa, "n_estimators": max(100, base["n_estimators"] // 2)})
     return p
 
 
@@ -53,10 +67,14 @@ def prever_referencia(exemplos: pd.DataFrame, nome: str) -> np.ndarray:
 @dataclass
 class ModeloLGBM:
     alvo: str
-    parametros: dict = field(default_factory=lambda: dict(PARAMETROS_LGBM))
+    parametros: dict | None = None
     colunas: list[str] = field(default_factory=list)
     modelo: lgb.LGBMRegressor | None = None
     quantis: dict[float, lgb.LGBMRegressor] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.parametros is None:
+            self.parametros = parametros_para(self.alvo)
 
     def treinar(self, exemplos: pd.DataFrame, intervalos: bool = True) -> ModeloLGBM:
         treino = exemplos.dropna(subset=["y"])
@@ -66,7 +84,9 @@ class ModeloLGBM:
         x, y = features.matriz_x(treino, self.colunas), treino["y"].to_numpy()
         self.modelo = lgb.LGBMRegressor(**self.parametros).fit(x, y)
         self.quantis = (
-            {a: lgb.LGBMRegressor(**_parametros_quantil(a)).fit(x, y) for a in QUANTIS} if intervalos else {}
+            {a: lgb.LGBMRegressor(**_parametros_quantil(self.parametros, a)).fit(x, y) for a in QUANTIS}
+            if intervalos
+            else {}
         )
         return self
 
