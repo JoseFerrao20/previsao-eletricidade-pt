@@ -70,7 +70,7 @@ O arquivo `historical-forecast-api` junta sobretudo as primeiras horas de cada
 corrida (previsões a muito curto prazo), o que tornaria o backtest otimista
 para horizontes de 24 a 48 h. A API `previous-runs-api.open-meteo.com` expõe
 `<variável>_previous_dayN`, a previsão feita N dias antes (uso confirmado em
-código público). Regra: D usa `previous_day2` e D+1 usa `previous_day3`.
+código público). Regra inicial: D usa `previous_day2` e D+1 usa `previous_day3`. Desde 2026-11: por hora, a corrida mais recente já publicada na emissão (ver `meteo.py` e o README).
 
 ## Stack proposta
 

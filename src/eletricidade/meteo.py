@@ -4,10 +4,19 @@ Usa a API "Previous Runs" (``<variavel>_previous_dayN``): o valor previsto para
 a hora t pela corrida de N dias antes. Isto evita dar ao modelo, no treino e no
 backtest, meteorologia melhor do que a que teria em produção.
 
-Regra (conservadora) usada no treino, no backtest e em produção:
-    previsão emitida à meia-noite de D
-      alvo em D   -> previous_day2
-      alvo em D+1 -> previous_day3
+Semântica (documentação do Open-Meteo): ``previous_dayN`` é o valor previsto
+N × 24 h antes da hora válida t, isto é, por uma corrida iniciada ~t − 24N h.
+
+Regra usada no treino, no backtest e em produção (config.REGRA_METEO):
+
+  "fresca" (por omissão): para cada hora t do dia alvo, o menor N tal que a
+     corrida já estava publicada à meia-noite de emissão T0:
+         t − 24N h + ATRASO_PUBLICACAO_METEO_H ≤ T0
+     Com 8 h de margem, as horas 0–16 de D usam previous_day1 e as 17–23
+     previous_day2; em D+1, previous_day2 e previous_day3.
+  "conservadora": D -> previous_day2 e D+1 -> previous_day3 em todas as horas
+     (equivale a uma margem de 24 h).
+
 Todas as corridas usadas já estavam publicadas à hora de emissão.
 """
 
@@ -20,6 +29,7 @@ import time
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -27,8 +37,27 @@ from . import config
 
 log = logging.getLogger(__name__)
 
-# dia do horizonte (1 = D, 2 = D+1) -> N de previous_dayN
+# Regra conservadora: dia do horizonte (1 = D, 2 = D+1) -> N de previous_dayN
 LEAD_METEO = {1: 2, 2: 3}
+# Offsets pedidos à API (a regra fresca usa N = lead ou lead + 1).
+OFFSETS_PEDIDOS = (1, 2, 3)
+
+
+def offset_para(ts_utc: pd.DatetimeIndex, lead: int, regra: str | None = None) -> pd.Index:
+    """N de previous_dayN a usar para cada hora válida, no horizonte ``lead``.
+
+    T0 (emissão) é a meia-noite local do dia de t menos (lead − 1) dias, por isso
+    t − T0 = 24(lead − 1) h + horas desde a meia-noite local de t. A condição
+    t − 24N + atraso ≤ T0 com N = lead fica: horas desde a meia-noite ≤ 24 − atraso.
+    """
+    regra = regra or config.REGRA_METEO
+    if regra == "conservadora":
+        return pd.Index([LEAD_METEO[lead]] * len(ts_utc))
+    local = ts_utc.tz_convert(config.FUSO)
+    meia_noite = local.normalize()
+    horas = (local - meia_noite).total_seconds() / 3600
+    limite = 24 - config.ATRASO_PUBLICACAO_METEO_H
+    return pd.Index(np.where(horas <= limite, lead, lead + 1))
 
 
 class ErroMeteo(RuntimeError):
@@ -36,7 +65,7 @@ class ErroMeteo(RuntimeError):
 
 
 def _variaveis_pedido() -> list[str]:
-    return [f"{v}_previous_day{n}" for v in config.VARIAVEIS_METEO for n in sorted(LEAD_METEO.values())]
+    return [f"{v}_previous_day{n}" for v in config.VARIAVEIS_METEO for n in OFFSETS_PEDIDOS]
 
 
 def descarregar(inicio: date, fim: date, tentativas: int = 6) -> list[dict]:
@@ -80,12 +109,17 @@ def interpretar(locais: list[dict]) -> pd.DataFrame:
         horario = local.get("hourly")
         if not isinstance(horario, dict) or "time" not in horario:
             raise ErroMeteo(f"Ponto {ponto.nome}: resposta sem 'hourly.time'")
-        ts = pd.to_datetime(horario["time"], utc=True)
+        ts = pd.DatetimeIndex(pd.to_datetime(horario["time"], utc=True))
         for var in config.VARIAVEIS_METEO:
-            for lead, n in LEAD_METEO.items():
+            por_offset = {}
+            for n in OFFSETS_PEDIDOS:
                 chave = f"{var}_previous_day{n}"
                 if chave not in horario:
                     raise ErroMeteo(f"Ponto {ponto.nome}: falta a variável {chave}")
+                por_offset[n] = pd.to_numeric(pd.Series(horario[chave]), errors="coerce").to_numpy()
+            for lead in LEAD_METEO:
+                n = offset_para(ts, lead).to_numpy()
+                valor = np.select([n == k for k in OFFSETS_PEDIDOS], [por_offset[k] for k in OFFSETS_PEDIDOS])
                 partes.append(
                     pd.DataFrame(
                         {
@@ -93,7 +127,7 @@ def interpretar(locais: list[dict]) -> pd.DataFrame:
                             "ponto": ponto.nome,
                             "variavel": var,
                             "lead_dias": lead,
-                            "valor": pd.to_numeric(pd.Series(horario[chave]), errors="coerce"),
+                            "valor": valor,
                         }
                     )
                 )
@@ -110,7 +144,7 @@ def _meses(inicio: date, fim: date) -> list[pd.Period]:
 def assinatura() -> str:
     """Identifica a lista de pontos e variáveis: mudá-la obriga a novo download, sem misturar."""
     texto = json.dumps(
-        [[(p.nome, p.lat, p.lon) for p in config.PONTOS], config.VARIAVEIS_METEO, LEAD_METEO],
+        [[(p.nome, p.lat, p.lon) for p in config.PONTOS], config.VARIAVEIS_METEO, OFFSETS_PEDIDOS],
         sort_keys=True,
     )
     return hashlib.sha1(texto.encode()).hexdigest()[:10]
