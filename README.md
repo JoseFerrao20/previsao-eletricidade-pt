@@ -317,7 +317,7 @@ nominais.
 | Workflow | Quando | O que faz |
 |----------|--------|-----------|
 | `ci` | cada *push* / PR | `ruff` + `pytest` no ambiente do `uv.lock`. |
-| `diario` | todos os dias, 01:10 UTC | Ingestão incremental (REN + Open-Meteo), previsão a 48 h com o campeão, monitor, painel no GitHub Pages. Se o monitor der alerta, abre/atualiza uma *issue* `alerta-modelo` e dispara o `retreino`. |
+| `diario` | 4 tentativas por noite: 00:23, 01:47, 03:13, 05:41 UTC | Ingestão incremental (REN + Open-Meteo), previsão a 48 h com o campeão, monitor, painel no GitHub Pages. Se o monitor der alerta, abre/atualiza uma *issue* `alerta-modelo` e dispara o `retreino`. |
 | `retreino` | domingos + a pedido do monitor | Backtest de 52 semanas (atualiza as tabelas de resultados e de análise deste README), treina candidatos e aplica a regra de promoção. |
 
 **Registo de modelos** (`src/eletricidade/registo.py`): cada versão guarda o
@@ -344,6 +344,22 @@ features. Na primeira execução real deu "drift" em tudo: no mês, no dia do an
 na temperatura de novembro. Seria um alerta e um retreino por dia. Por isso, o
 calendário e os lags do próprio alvo ficaram de fora (a mudança do alvo já se
 mede no erro), e a referência passou a ser sazonal.
+
+**Agendamento e emissão.** O agendamento do GitHub Actions não é pontual: entre
+5 e 9 de novembro, o cron das 01:10 UTC arrancou sempre entre as 07:06 e as
+07:56, com cerca de 6 h de atraso. Por isso:
+- há várias tentativas por noite, em minutos fora da hora certa;
+- **a primeira emissão é a que conta:** uma origem já emitida nunca é reemitida
+  (salvo `--forcar`). Uma reemissão mais tarde poderia usar um modelo
+  retreinado com valores do próprio dia e contaminar a avaliação do erro
+  realizado;
+- se o dia anterior ainda estiver incompleto na REN, a emissão é adiada para a
+  tentativa seguinte; só a última (05:41) ou uma execução manual emite mesmo
+  assim, com aviso. A 7 de novembro, um 404 da REN para o dia anterior tinha
+  parado o workflow inteiro, e esse dia ficou sem previsão;
+- cada previsão guarda `emitida_em`; o monitor e o painel mostram o atraso
+  face à meia-noite de Lisboa. A informação usada é sempre a disponível à
+  meia-noite; o atraso só afeta quando a previsão fica disponível.
 
 **Onde fica cada coisa.** O código fica em `main`. O estado de produção
 (registo, previsões emitidas, relatórios do monitor, resultados do backtest)

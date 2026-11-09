@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo
+from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo, ren
 from .modelos import REFERENCIAS, ModeloLGBM
 
 log = logging.getLogger(__name__)
@@ -90,6 +90,17 @@ def treinar_e_promover(alvo: str, ex: pd.DataFrame, semanas_gate: int = 4, raiz:
         "motivo": motivo_rejeicao or "ok",
         **resumo,
     }
+
+
+def dia_completo(grade: pd.DataFrame, dia: pd.Timestamp) -> bool:
+    """Todas as horas do dia com valor em todos os alvos (no dia em que a hora avança, 23)."""
+    dias = pd.to_datetime(grade.index.get_level_values("dia"))
+    bloco = grade[dias == pd.Timestamp(dia).normalize()][list(config.ALVOS)]
+    if bloco.empty:
+        return False
+    horas_validas = bloco.dropna(how="any")
+    esperado = 23 if ren.e_dia_mudanca_hora(pd.Timestamp(dia).date()) else 24
+    return len(horas_validas) >= esperado
 
 
 def prever(origem: pd.Timestamp, grade=None, grupos=None, raiz: Path | None = None) -> pd.DataFrame:

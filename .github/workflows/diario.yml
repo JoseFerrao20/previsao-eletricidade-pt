@@ -67,7 +67,15 @@ jobs:
           fi
 
       - name: Previsão a 48 h
-        run: uv run eletricidade prever
+        env:
+          # Na última tentativa da madrugada (ou à mão) emite mesmo com D-1 incompleto.
+          ULTIMA: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '41 5 * * *' }}
+        run: |
+          if [ "$ULTIMA" = "true" ]; then
+            uv run eletricidade prever --aceitar-incompleto
+          else
+            uv run eletricidade prever
+          fi
 
       - name: Monitor
         id: monitor
