@@ -121,6 +121,12 @@ METEO_POR_ALVO = {
     "solar": (("sol", "shortwave_radiation"), ("sol", "cloud_cover"), ("sol", "temperature_2m")),
 }
 
+# Que corrida meteorológica usar para cada hora (ver meteo.py): "fresca" ou "conservadora".
+REGRA_METEO = os.environ.get("ELETRICIDADE_REGRA_METEO", "fresca")
+# Margem (h) entre o início de uma corrida e a sua publicação no Open-Meteo. Os modelos
+# globais publicam 3–6 h depois do início; 8 h deixa folga para o processamento.
+ATRASO_PUBLICACAO_METEO_H = 8
+
 # Horizonte: a previsão emitida à meia-noite local de D cobre D (lead 1) e D+1 (lead 2).
 DIAS_HORIZONTE = 2
 

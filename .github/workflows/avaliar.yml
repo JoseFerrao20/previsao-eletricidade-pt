@@ -10,6 +10,9 @@ on:
       semanas:
         description: Semanas de backtest
         default: "52"
+      regra_meteo:
+        description: Regra da corrida meteorológica (fresca ou conservadora)
+        default: fresca
       ultima_semana:
         description: Segunda-feira da última semana de teste (vazio = a mais recente)
         default: ""
@@ -21,6 +24,8 @@ jobs:
   avaliar:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      ELETRICIDADE_REGRA_METEO: ${{ inputs.regra_meteo }}
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v7

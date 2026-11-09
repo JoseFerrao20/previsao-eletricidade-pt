@@ -43,7 +43,7 @@ def payload_ren(dia: date, n: int | None = None, nomes=None, valor=1000.0) -> di
 
 
 def payload_meteo(inicio: str, fim: str) -> list[dict]:
-    from eletricidade.meteo import LEAD_METEO
+    from eletricidade.meteo import OFFSETS_PEDIDOS
 
     horas = pd.date_range(inicio, pd.Timestamp(fim) + pd.Timedelta(hours=23), freq="1h")
     tempos = [t.strftime("%Y-%m-%dT%H:%M") for t in horas]
@@ -51,7 +51,7 @@ def payload_meteo(inicio: str, fim: str) -> list[dict]:
     for k, _ponto in enumerate(config.PONTOS):
         horario = {"time": tempos}
         for v in config.VARIAVEIS_METEO:
-            for n in LEAD_METEO.values():
+            for n in OFFSETS_PEDIDOS:
                 horario[f"{v}_previous_day{n}"] = [float(k + n)] * len(tempos)
         locais.append({"hourly": horario})
     return locais

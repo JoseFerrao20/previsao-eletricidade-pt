@@ -67,7 +67,8 @@ def test_extensao_para_o_futuro(horario_sintetico):
     assert hoje[cols].notna().all().all()
 
 
-def test_meteo_interpretar_e_juntar(horario_sintetico):
+def test_meteo_interpretar_e_juntar(horario_sintetico, monkeypatch):
+    monkeypatch.setattr(config, "REGRA_METEO", "conservadora")
     longo = meteo.interpretar(payload_meteo("2024-01-01", "2024-03-01"))
     grupos = meteo.agregar_por_grupo(longo)
     assert {"vento__wind_speed_100m", "sol__shortwave_radiation"} <= set(grupos.columns)
@@ -89,7 +90,8 @@ def test_meteo_interpretar_e_juntar(horario_sintetico):
     assert set(meteo.colunas_por_ponto("eolica")) <= set(ex.columns)
 
 
-def test_um_ponto_pode_estar_em_varios_grupos():
+def test_um_ponto_pode_estar_em_varios_grupos(monkeypatch):
+    monkeypatch.setattr(config, "REGRA_METEO", "conservadora")
     longo = meteo.interpretar(payload_meteo("2024-01-01", "2024-01-02"))
     grupos = meteo.agregar_por_grupo(longo)
     idx_sol = [k for k, p in enumerate(config.PONTOS) if config.SOL in p.grupos]
@@ -174,3 +176,42 @@ def test_consumo_recebe_features_termicas(horario_sintetico):
     fev = ex[(ex["dia"] >= "2024-02-05") & (ex["dia"] < "2024-02-28")]
     assert fev["temp_media_dia"].notna().all() and fev["temp_media_3d_antes"].notna().all()
     assert "temp_media_dia" not in features.construir_exemplos(grade, grupos, "eolica")
+
+
+def test_regra_fresca_so_usa_corridas_ja_publicadas_na_emissao():
+    """Para cada hora válida t e horizonte, a corrida (≈ t − 24N h) + atraso ≤ meia-noite de emissão."""
+    ts = pd.date_range("2026-03-27", "2026-04-02", freq="1h", tz="UTC")  # inclui mudança de hora
+    local = ts.tz_convert(config.FUSO)
+    for lead in (1, 2):
+        n = meteo.offset_para(ts, lead, "fresca").to_numpy()
+        # emissão: meia-noite local do dia de t menos (lead − 1) dias
+        dia_emissao = (local.normalize().tz_localize(None) - pd.Timedelta(days=lead - 1)).normalize()
+        t0 = dia_emissao.tz_localize(config.FUSO).tz_convert("UTC")
+        inicio_corrida = ts - pd.to_timedelta(24 * n, unit="h")
+        assert (inicio_corrida + pd.Timedelta(hours=config.ATRASO_PUBLICACAO_METEO_H) <= t0).all()
+        # e é a mais fresca possível: N − 1 já violaria a regra (ou não existe). Se houver uma
+        # mudança de hora entre a emissão e t, a regra pode ficar 1 h mais conservadora (lado seguro).
+        mais_fresca = ts - pd.to_timedelta(24 * (n - 1), unit="h")
+        atraso = pd.Timedelta(hours=config.ATRASO_PUBLICACAO_METEO_H)
+        horas_relogio = (local.tz_localize(None) - dia_emissao).total_seconds() / 3600
+        horas_reais = (ts - t0).total_seconds() / 3600
+        mudanca_hora = horas_relogio != horas_reais
+        violaria = (mais_fresca + atraso > t0) | (
+            mudanca_hora & (mais_fresca + atraso + pd.Timedelta(hours=1) > t0)
+        )
+        assert (violaria | (n - 1 < 1)).all()
+        assert set(np.unique(n)) == {lead, lead + 1}
+
+
+def test_regra_fresca_por_hora(monkeypatch):
+    monkeypatch.setattr(config, "REGRA_METEO", "fresca")
+    longo = meteo.interpretar(payload_meteo("2024-01-10", "2024-01-11"))  # inverno: hora local = UTC
+    k = 0  # primeiro ponto: valor sintético = índice do ponto + N
+    d = longo[(longo["ponto"] == config.PONTOS[k].nome) & (longo["variavel"] == "temperature_2m")]
+    hora = d["ts_utc"].dt.hour
+    limite = 24 - config.ATRASO_PUBLICACAO_METEO_H
+    lead1 = d[d["lead_dias"] == 1]
+    assert (lead1.loc[hora[lead1.index] <= limite, "valor"] == k + 1).all()
+    assert (lead1.loc[hora[lead1.index] > limite, "valor"] == k + 2).all()
+    lead2 = d[d["lead_dias"] == 2]
+    assert set(lead2["valor"]) == {k + 2, k + 3}
