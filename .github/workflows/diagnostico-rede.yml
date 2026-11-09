@@ -61,3 +61,18 @@ jobs:
                   except Exception as e:
                       print(dia, nome, "ERRO", type(e).__name__, f"{time.time()-t:.1f}s")
           PY
+
+      - name: Open-Meteo Previous Runs com vários modelos (formato e cobertura)
+        shell: bash
+        run: |
+          set +e
+          URL="https://previous-runs-api.open-meteo.com/v1/forecast"
+          VARS="temperature_2m_previous_day1,wind_speed_100m_previous_day1,shortwave_radiation_previous_day1,wind_speed_100m_previous_day3"
+          MODELOS="ecmwf_ifs025,gfs_seamless,icon_seamless,meteofrance_seamless"
+          for periodo in "start_date=2024-01-15&end_date=2024-01-16" "past_days=2&forecast_days=1"; do
+            echo "::group::$periodo"
+            curl -sS -m 60 -A "previsao-eletricidade-pt (+https://github.com/${GITHUB_REPOSITORY})" \
+              "$URL?latitude=40.57&longitude=-8.17&hourly=$VARS&models=$MODELOS&wind_speed_unit=ms&timezone=GMT&$periodo" \
+              | jq -c '{erro: .reason, chaves: (.hourly // {} | keys), nulos: (.hourly // {} | with_entries(select(.key != "time")) | map_values([.[] | select(. == null)] | length)), n: (.hourly.time // [] | length)}'
+            echo "::endgroup::"
+          done
