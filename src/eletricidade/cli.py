@@ -20,6 +20,7 @@ from . import (
     features,
     intervalos,
     meteo,
+    meteo_modelos,
     monitor,
     painel,
     producao,
@@ -62,6 +63,18 @@ def cmd_ingest(args) -> int:
     # Meteorologia até D+1 (necessária para emitir a previsão de hoje).
     meteo.atualizar(desde, hoje + timedelta(days=config.DIAS_HORIZONTE - 1))
     longo = meteo.construir_horario()
+    if config.MODELOS_METEO_EXTRA:
+        fim_meteo = hoje + timedelta(days=config.DIAS_HORIZONTE - 1)
+        try:
+            meteo_modelos.atualizar(max(desde, date(2024, 1, 1)), fim_meteo)
+        except meteo.ErroMeteo as erro:
+            # Os modelos extra são um complemento: a falha não pára a previsão (as
+            # features ficam em falta nesses meses) mas fica visível no resumo.
+            log.error("Modelos meteorológicos extra: %s", erro)
+            _resumo_github(f"⚠️ Modelos meteorológicos extra com falhas: {erro}\n")
+        extra = meteo_modelos.construir_horario()
+        if extra is not None:
+            longo = pd.concat([longo, extra], ignore_index=True)
     longo.to_parquet(config.FICH_METEO_HORARIO, index=False)
     resumo = meteo.resumo_por_ponto(longo)
     texto_meteo = (

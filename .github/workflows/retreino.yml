@@ -21,7 +21,7 @@ permissions:
 jobs:
   retreino:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v7
@@ -36,7 +36,7 @@ jobs:
 
       - run: scripts/estado.sh abrir
       - name: Ingestão incremental (REN + Open-Meteo)
-        timeout-minutes: 75
+        timeout-minutes: 110
         run: uv run eletricidade ingest
 
       - name: Dados brutos (guardar cache, mesmo com falhas)

@@ -332,6 +332,31 @@ quantis ficaram com menos árvores, e o intervalo calibrado alargou de 887 para
 958 MW (D), com cobertura parecida. Os parâmetros estão versionados em
 `src/eletricidade/hiperparametros.json`.
 
+#### Experiência: vários modelos meteorológicos
+
+Além do modelo de omissão do Open-Meteo, a meteorologia passa a vir também do
+ECMWF (IFS 0,25°), do GFS e do ICON:
+- cada modelo só é pedido para a variável que interessa a cada grupo de pontos
+  (vento a 100 m, radiação, temperatura), para não multiplicar a carga sobre a
+  API;
+- o modelo recebe a média do grupo por modelo e a **dispersão entre modelos**,
+  uma medida direta da incerteza meteorológica;
+- antes de escrever código, confirmou-se num runner (workflow
+  `diagnostico-rede`) o formato da resposta e o início do arquivo de cada
+  modelo: completo desde março de 2024. A Météo-France ficou de fora, porque
+  não tem previsão a 2 dias.
+
+Mesmas 52 semanas e mesmas horas:
+
+| Alvo | MAE antes | MAE depois | Variação |
+|---|---:|---:|---:|
+| eolica | 301 MW | 262 MW | **−13 %** |
+| solar | 112 MW | 111 MW | −1 % |
+| consumo | 195 MW | 195 MW | 0 % |
+
+Os intervalos da eólica também ficaram mais estreitos (958 → 888 MW em D), com a
+mesma cobertura. A primeira ingestão dos três modelos demora cerca de 1 h.
+
 #### Experiência sem ganho: prever em fração da potência instalada
 
 Hipótese: a potência solar e eólica cresce, por isso um modelo treinado no

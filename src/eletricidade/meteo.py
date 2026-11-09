@@ -68,17 +68,27 @@ def _variaveis_pedido() -> list[str]:
     return [f"{v}_previous_day{n}" for v in config.VARIAVEIS_METEO for n in OFFSETS_PEDIDOS]
 
 
-def descarregar(inicio: date, fim: date, tentativas: int = 6) -> list[dict]:
-    """Um pedido para todos os pontos. Devolve uma lista (um elemento por ponto)."""
+def descarregar(
+    inicio: date,
+    fim: date,
+    tentativas: int = 6,
+    pontos=None,
+    variaveis: list[str] | None = None,
+    modelos: tuple[str, ...] = (),
+) -> list[dict]:
+    """Um pedido para vários pontos. Devolve uma lista (um elemento por ponto)."""
+    pontos = pontos or config.PONTOS
     params = {
-        "latitude": ",".join(f"{p.lat}" for p in config.PONTOS),
-        "longitude": ",".join(f"{p.lon}" for p in config.PONTOS),
-        "hourly": ",".join(_variaveis_pedido()),
+        "latitude": ",".join(f"{p.lat}" for p in pontos),
+        "longitude": ",".join(f"{p.lon}" for p in pontos),
+        "hourly": ",".join(variaveis or _variaveis_pedido()),
         "start_date": inicio.isoformat(),
         "end_date": fim.isoformat(),
         "timezone": "GMT",
         "wind_speed_unit": "ms",
     }
+    if modelos:
+        params["models"] = ",".join(modelos)
     espera = 10.0  # 10, 20, 40, 80, 160 s: a API recusa por uns minutos quando está carregada
     for tentativa in range(1, tentativas + 1):
         try:
@@ -160,18 +170,23 @@ def caminho_bruto(mes: pd.Period, raiz: Path | None = None) -> Path:
 
 def atualizar(inicio: date, fim: date, raiz: Path | None = None) -> list[str]:
     """Descarrega meses em falta; o mês de ``fim`` e o anterior são sempre revistos."""
+    return atualizar_meses(inicio, fim, lambda mes: caminho_bruto(mes, raiz), descarregar, interpretar)
+
+
+def atualizar_meses(inicio: date, fim: date, caminho, obter, validar) -> list[str]:
+    """Ciclo mensal comum: só meses em falta (mais os dois últimos), resistente a falhas."""
     meses = _meses(inicio, fim)
     ultimos = set(meses[-2:])
     feitos, falhas = [], {}
     for mes in meses:
-        destino = caminho_bruto(mes, raiz)
+        destino = caminho(mes)
         if destino.exists() and mes not in ultimos:
             continue
         a = max(mes.start_time.date(), inicio)
         b = min(mes.end_time.date(), fim)
         try:
-            locais = descarregar(a, b)
-            interpretar(locais)  # valida antes de gravar
+            locais = obter(a, b)
+            validar(locais)  # valida antes de gravar
         except ErroMeteo as erro:
             # Continua: os meses já obtidos ficam gravados (e na cache), e a próxima
             # execução só pede os que faltam.

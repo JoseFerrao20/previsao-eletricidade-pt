@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from . import calendario, config
+from . import calendario, config, meteo_modelos
 from .meteo import colunas_por_ponto
 
 
@@ -78,7 +78,11 @@ def features_historicas(
 
 def features_meteo(meteo_grupos_utc: pd.DataFrame, alvo: str, lead: int) -> pd.DataFrame:
     """Meteorologia prevista para o alvo, com a corrida correspondente ao lead."""
-    colunas = [f"{g}__{v}" for g, v in config.METEO_POR_ALVO[alvo]] + colunas_por_ponto(alvo)
+    colunas = (
+        [f"{g}__{v}" for g, v in config.METEO_POR_ALVO[alvo]]
+        + colunas_por_ponto(alvo)
+        + meteo_modelos.colunas_para(alvo)
+    )
     sub = meteo_grupos_utc.xs(lead, level="lead_dias").reindex(columns=colunas)
     sub.index = pd.DatetimeIndex(sub.index)
     if sub.index.tz is None:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import backtest, config, features, intervalos, meteo, metricas, monitor, registo, ren
+from . import backtest, config, features, intervalos, meteo, meteo_modelos, metricas, monitor, registo, ren
 from .modelos import REFERENCIAS, ModeloLGBM
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ def carregar_meteo() -> pd.DataFrame | None:
     if not config.FICH_METEO_HORARIO.exists():
         log.warning("Sem meteorologia: os modelos treinam só com histórico e calendário")
         return None
-    return meteo.agregar_por_grupo(pd.read_parquet(config.FICH_METEO_HORARIO))
+    return meteo_modelos.com_dispersao(meteo.agregar_por_grupo(pd.read_parquet(config.FICH_METEO_HORARIO)))
 
 
 def exemplos(alvo: str, grade=None, grupos=None, ate: pd.Timestamp | None = None) -> pd.DataFrame:
