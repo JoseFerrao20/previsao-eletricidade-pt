@@ -116,7 +116,7 @@ Backtest semana a semana: 52 semanas de teste, de 2025-11-10 a 2026-11-08; horiz
 
 | Alvo | Modelo | MAE (MW) | MAPE | sMAPE | Skill vs. naive sazonal |
 |------|--------|---------:|-----:|------:|------------------------:|
-| consumo | **LightGBM** | 185 | 2.9% | 2.9% | +47.8% |
+| consumo | **LightGBM** | 184 | 2.9% | 2.9% | +47.8% |
 | consumo | Naive sazonal (7 dias) | 354 | 5.6% | 5.6% | +0.0% |
 | consumo | Média da semana anterior | 467 | 7.7% | 7.5% | -32.2% |
 | consumo | Persistência (D-1) | 556 | 9.0% | 9.0% | -57.1% |
@@ -168,14 +168,14 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Estação | inverno | 4 320 | 284 | 490 | 490 (naive) | +42% |
 | Estação | primavera | 4 400 | 143 | 311 | 311 (naive) | +54% |
 | Estação | verão | 4 416 | 156 | 327 | 327 (naive) | +52% |
-| Estação | outono | 4 320 | 156 | 289 | 289 (naive) | +46% |
-| Tipo de dia | dia útil | 11 896 | 185 | 353 | 353 (naive) | +48% |
+| Estação | outono | 4 320 | 156 | 288 | 288 (naive) | +46% |
+| Tipo de dia | dia útil | 11 896 | 184 | 353 | 353 (naive) | +48% |
 | Tipo de dia | fim de semana | 4 796 | 177 | 306 | 306 (naive) | +42% |
 | Tipo de dia | feriado | 620 | 220 | 689 | 689 (naive) | +68% |
 | Tipo de dia | ponte | 144 | 267 | 554 | 333 (média sem.) | +20% |
 | Temperatura prevista | < 10 °C | 1 731 | 229 | 389 | 389 (naive) | +41% |
 | Temperatura prevista | 10–20 °C | 10 862 | 184 | 342 | 342 (naive) | +46% |
-| Temperatura prevista | 20–28 °C | 4 329 | 162 | 342 | 342 (naive) | +53% |
+| Temperatura prevista | 20–28 °C | 4 329 | 161 | 342 | 342 (naive) | +53% |
 | Temperatura prevista | ≥ 28 °C | 534 | 234 | 572 | 572 (naive) | +59% |
 
 **eolica**
@@ -186,14 +186,14 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Estação | primavera | 4 400 | 274 | 1135 | 853 (média sem.) | +68% |
 | Estação | verão | 4 416 | 199 | 690 | 557 (média sem.) | +64% |
 | Estação | outono | 4 320 | 231 | 1140 | 929 (média sem.) | +75% |
-| Tipo de dia | dia útil | 11 896 | 255 | 1111 | 862 (média sem.) | +70% |
+| Tipo de dia | dia útil | 11 896 | 255 | 1110 | 862 (média sem.) | +70% |
 | Tipo de dia | fim de semana | 4 796 | 285 | 1088 | 835 (média sem.) | +66% |
 | Tipo de dia | feriado | 620 | 228 | 1273 | 814 (persist.) | +72% |
 | Tipo de dia | ponte | 144 | 240 | 1539 | 1264 (média sem.) | +81% |
 | Vento previsto a 100 m | < 4 m/s | 8 539 | 190 | 950 | 718 (persist.) | +73% |
 | Vento previsto a 100 m | 4–8 m/s | 6 895 | 316 | 1101 | 782 (média sem.) | +60% |
 | Vento previsto a 100 m | 8–12 m/s | 1 553 | 384 | 1866 | 1587 (média sem.) | +76% |
-| Vento previsto a 100 m | ≥ 12 m/s | 469 | 358 | 1780 | 1355 (persist.) | +74% |
+| Vento previsto a 100 m | ≥ 12 m/s | 469 | 358 | 1778 | 1353 (persist.) | +74% |
 
 **solar**
 
@@ -470,15 +470,15 @@ Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas 52 semanas, menos
 | consumo | D | LightGBM (quantis, sem calibrar) | 63.9% | 16.2% / 19.9% | 442 | 47 / 49 |
 | consumo | D | Naive ± erros passados | 82.1% | 9.8% / 8.1% | 1273 | 99 / 100 |
 | consumo | D | **LightGBM calibrado** | 77.1% | 11.8% / 11.1% | 599 | 47 / 45 |
-| consumo | D+1 | LightGBM (quantis, sem calibrar) | 60.4% | 18.3% / 21.3% | 467 | 54 / 57 |
+| consumo | D+1 | LightGBM (quantis, sem calibrar) | 60.5% | 18.3% / 21.2% | 467 | 54 / 57 |
 | consumo | D+1 | Naive ± erros passados | 82.2% | 9.7% / 8.1% | 1277 | 99 / 100 |
-| consumo | D+1 | **LightGBM calibrado** | 77.1% | 12.1% / 10.9% | 678 | 53 / 51 |
+| consumo | D+1 | **LightGBM calibrado** | 77.1% | 12.1% / 10.8% | 678 | 53 / 51 |
 | eolica | D | LightGBM (quantis, sem calibrar) | 82.3% | 9.7% / 8.0% | 989 | 54 / 70 |
 | eolica | D | Naive ± erros passados | 87.3% | 6.4% / 6.2% | 4493 | 266 / 272 |
 | eolica | D | **LightGBM calibrado** | 77.3% | 11.7% / 11.0% | 879 | 55 / 69 |
-| eolica | D+1 | LightGBM (quantis, sem calibrar) | 78.7% | 11.6% / 9.6% | 1007 | 61 / 77 |
+| eolica | D+1 | LightGBM (quantis, sem calibrar) | 78.8% | 11.6% / 9.6% | 1007 | 61 / 77 |
 | eolica | D+1 | Naive ± erros passados | 87.0% | 6.5% / 6.5% | 4501 | 266 / 276 |
-| eolica | D+1 | **LightGBM calibrado** | 77.1% | 11.7% / 11.3% | 957 | 62 / 77 |
+| eolica | D+1 | **LightGBM calibrado** | 77.1% | 11.7% / 11.2% | 957 | 62 / 77 |
 | solar | D | LightGBM (quantis, sem calibrar) | 53.7% | 6.1% / 40.2% | 334 | 28 / 27 |
 | solar | D | Naive ± erros passados | 79.4% | 10.2% / 10.4% | 809 | 85 / 82 |
 | solar | D | **LightGBM calibrado** | 81.0% | 7.4% / 11.6% | 367 | 28 / 25 |
