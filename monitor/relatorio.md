@@ -1,19 +1,22 @@
-Relatório do monitor (2026-11-09T07:56:36+00:00)
+Relatório do monitor (2026-11-10T07:37:17+00:00)
 
-### ⚠️ consumo (modelo 20261108T1049-f35a707)
-- MAE realizado (7 dias): 207 MW · naive sazonal: 310 MW · referência do backtest: 152 MW
-- degradação: MAE 207 MW = 1.36× a referência (152)
-- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.33)
-- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.52)
+Emissão: a previsão de 2026-11-10 saiu 7.6 h depois da meia-noite; nas últimas 1 origens, mediana 7.6 h e máximo 7.6 h.
 
-### ⚠️ eolica (modelo 20261108T1049-f35a707)
-- MAE realizado (7 dias): 639 MW · naive sazonal: 1117 MW · referência do backtest: 406 MW
-- degradação: MAE 639 MW = 1.57× a referência (406)
-- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.34)
+### ⚠️ consumo (modelo 20261109T1814-db63b7c)
+- MAE realizado (7 dias): 208 MW · naive sazonal: 348 MW · referência do backtest: 146 MW
+- degradação: MAE 208 MW = 1.42× a referência (146)
+- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.27)
+- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.42)
 
-### ✅ solar (modelo 20261108T1049-f35a707)
-- MAE realizado (7 dias): 148 MW · naive sazonal: 224 MW · referência do backtest: 137 MW
+### ⚠️ eolica (modelo 20261109T1814-db63b7c)
+- MAE realizado (7 dias): 707 MW · naive sazonal: 1506 MW · referência do backtest: 199 MW
+- degradação: MAE 707 MW = 3.55× a referência (199)
+- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.70)
+
+### ✅ solar (modelo 20261109T1814-db63b7c)
+- MAE realizado (7 dias): 136 MW · naive sazonal: 230 MW · referência do backtest: 128 MW
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.46)
+- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.48)
+- aviso: meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 0.27)
 
 O retreino foi pedido automaticamente.
