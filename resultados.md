@@ -2,7 +2,7 @@ Backtest semana a semana: 52 semanas de teste, de 2025-11-10 a 2026-11-08; horiz
 
 | Alvo | Modelo | MAE (MW) | MAPE | sMAPE | Skill vs. naive sazonal |
 |------|--------|---------:|-----:|------:|------------------------:|
-| consumo | **LightGBM** | 185 | 2.9% | 2.9% | +47.8% |
+| consumo | **LightGBM** | 184 | 2.9% | 2.9% | +47.8% |
 | consumo | Naive sazonal (7 dias) | 354 | 5.6% | 5.6% | +0.0% |
 | consumo | Média da semana anterior | 467 | 7.7% | 7.5% | -32.2% |
 | consumo | Persistência (D-1) | 556 | 9.0% | 9.0% | -57.1% |
