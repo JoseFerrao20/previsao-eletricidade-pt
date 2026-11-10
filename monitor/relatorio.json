@@ -1,12 +1,12 @@
 {
-  "gerado_em": "2026-11-10T08:54:56+00:00",
+  "gerado_em": "2026-11-10T11:09:31+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261110T0759-6207f82",
+      "versao": "20261110T0917-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 208.50939148932997,
-      "MAE_naive_sazonal": 348.4349537037037,
-      "MAE_referencia": 133.68317427654833,
+      "MAE_realizado": 195.2355196892342,
+      "MAE_naive_sazonal": 328.52893518518516,
+      "MAE_referencia": 133.70711400869118,
       "psi": {
         "populacao__temperature_2m": 0.265,
         "populacao__cloud_cover": 0.422,
@@ -17,14 +17,14 @@
         "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.42)"
       ],
       "sinais": [
-        "degradação: MAE 209 MW = 1.56× a referência (134)"
+        "degradação: MAE 195 MW = 1.46× a referência (134)"
       ]
     },
     "eolica": {
-      "versao": "20261110T0759-6207f82",
+      "versao": "20261110T0917-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 707.274635809189,
-      "MAE_naive_sazonal": 1505.8844907407406,
+      "MAE_realizado": 696.0290339573372,
+      "MAE_naive_sazonal": 1494.6388888888891,
       "MAE_referencia": 228.17956361154012,
       "psi": {
         "vento__wind_speed_100m": 0.705
@@ -33,15 +33,15 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.70)"
       ],
       "sinais": [
-        "degradação: MAE 707 MW = 3.10× a referência (228)"
+        "degradação: MAE 696 MW = 3.05× a referência (228)"
       ]
     },
     "solar": {
-      "versao": "20261110T0800-6207f82",
+      "versao": "20261110T0917-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 136.0925143326488,
-      "MAE_naive_sazonal": 229.55231481481482,
-      "MAE_referencia": 122.44788036256497,
+      "MAE_realizado": 136.1956125597422,
+      "MAE_naive_sazonal": 229.3224537037037,
+      "MAE_referencia": 122.43884018399355,
       "psi": {
         "sol__shortwave_radiation": 0.021,
         "sol__cloud_cover": 0.484,
