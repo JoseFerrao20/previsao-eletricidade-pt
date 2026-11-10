@@ -1,12 +1,12 @@
 {
-  "gerado_em": "2026-11-10T11:09:31+00:00",
+  "gerado_em": "2026-11-10T13:52:09+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261110T0917-7b8dc9d",
+      "versao": "20261110T1129-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 195.2355196892342,
-      "MAE_naive_sazonal": 328.52893518518516,
-      "MAE_referencia": 133.70711400869118,
+      "MAE_realizado": 190.83195286469297,
+      "MAE_naive_sazonal": 317.83148148148143,
+      "MAE_referencia": 132.21559719641326,
       "psi": {
         "populacao__temperature_2m": 0.265,
         "populacao__cloud_cover": 0.422,
@@ -17,15 +17,15 @@
         "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.42)"
       ],
       "sinais": [
-        "degradação: MAE 195 MW = 1.46× a referência (134)"
+        "degradação: MAE 191 MW = 1.44× a referência (132)"
       ]
     },
     "eolica": {
-      "versao": "20261110T0917-7b8dc9d",
+      "versao": "20261110T1130-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 696.0290339573372,
-      "MAE_naive_sazonal": 1494.6388888888891,
-      "MAE_referencia": 228.17956361154012,
+      "MAE_realizado": 685.1079691425225,
+      "MAE_naive_sazonal": 1483.717824074074,
+      "MAE_referencia": 227.73296762939722,
       "psi": {
         "vento__wind_speed_100m": 0.705
       },
@@ -33,15 +33,15 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.70)"
       ],
       "sinais": [
-        "degradação: MAE 696 MW = 3.05× a referência (228)"
+        "degradação: MAE 685 MW = 3.01× a referência (228)"
       ]
     },
     "solar": {
-      "versao": "20261110T0917-7b8dc9d",
+      "versao": "20261110T1130-7b8dc9d",
       "n_horas": 216,
-      "MAE_realizado": 136.1956125597422,
-      "MAE_naive_sazonal": 229.3224537037037,
-      "MAE_referencia": 122.43884018399355,
+      "MAE_realizado": 136.0004736708533,
+      "MAE_naive_sazonal": 229.67638888888888,
+      "MAE_referencia": 122.44309282561974,
       "psi": {
         "sol__shortwave_radiation": 0.021,
         "sol__cloud_cover": 0.484,
