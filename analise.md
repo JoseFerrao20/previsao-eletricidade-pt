@@ -7,7 +7,7 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Estação | inverno | 4 320 | 284 | 490 | 490 (naive) | +42% |
 | Estação | primavera | 4 400 | 143 | 311 | 311 (naive) | +54% |
 | Estação | verão | 4 416 | 156 | 327 | 327 (naive) | +52% |
-| Estação | outono | 4 320 | 156 | 288 | 288 (naive) | +46% |
+| Estação | outono | 4 320 | 155 | 288 | 288 (naive) | +46% |
 | Tipo de dia | dia útil | 11 896 | 184 | 353 | 353 (naive) | +48% |
 | Tipo de dia | fim de semana | 4 796 | 177 | 306 | 306 (naive) | +42% |
 | Tipo de dia | feriado | 620 | 220 | 689 | 689 (naive) | +68% |
@@ -24,15 +24,15 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Estação | inverno | 4 320 | 345 | 1500 | 1092 (média sem.) | +68% |
 | Estação | primavera | 4 400 | 274 | 1135 | 853 (média sem.) | +68% |
 | Estação | verão | 4 416 | 199 | 690 | 557 (média sem.) | +64% |
-| Estação | outono | 4 320 | 231 | 1140 | 929 (média sem.) | +75% |
-| Tipo de dia | dia útil | 11 896 | 255 | 1110 | 862 (média sem.) | +70% |
+| Estação | outono | 4 320 | 231 | 1139 | 928 (média sem.) | +75% |
+| Tipo de dia | dia útil | 11 896 | 254 | 1110 | 862 (média sem.) | +70% |
 | Tipo de dia | fim de semana | 4 796 | 285 | 1088 | 835 (média sem.) | +66% |
 | Tipo de dia | feriado | 620 | 228 | 1273 | 814 (persist.) | +72% |
 | Tipo de dia | ponte | 144 | 240 | 1539 | 1264 (média sem.) | +81% |
 | Vento previsto a 100 m | < 4 m/s | 8 539 | 190 | 950 | 718 (persist.) | +73% |
 | Vento previsto a 100 m | 4–8 m/s | 6 895 | 316 | 1101 | 782 (média sem.) | +60% |
-| Vento previsto a 100 m | 8–12 m/s | 1 553 | 384 | 1866 | 1587 (média sem.) | +76% |
-| Vento previsto a 100 m | ≥ 12 m/s | 469 | 358 | 1778 | 1353 (persist.) | +74% |
+| Vento previsto a 100 m | 8–12 m/s | 1 553 | 384 | 1865 | 1587 (média sem.) | +76% |
+| Vento previsto a 100 m | ≥ 12 m/s | 469 | 357 | 1776 | 1351 (persist.) | +74% |
 
 **solar**
 
