@@ -1,12 +1,12 @@
 {
-  "gerado_em": "2026-11-12T11:06:04+00:00",
+  "gerado_em": "2026-11-12T14:04:29+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261112T0916-d52b371",
+      "versao": "20261112T1128-d52b371",
       "n_horas": 288,
-      "MAE_realizado": 206.88624263279047,
-      "MAE_naive_sazonal": 383.4934027777778,
-      "MAE_referencia": 128.8097924990579,
+      "MAE_realizado": 206.84961068834602,
+      "MAE_naive_sazonal": 383.50572916666675,
+      "MAE_referencia": 131.44566927850786,
       "cobertura_80": 58.333333333333336,
       "psi": {
         "populacao__temperature_2m": 0.188,
@@ -17,15 +17,15 @@
         "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.48)"
       ],
       "sinais": [
-        "degradação: MAE 207 MW = 1.61× a referência (129)"
+        "degradação: MAE 207 MW = 1.57× a referência (131)"
       ]
     },
     "eolica": {
-      "versao": "20261112T0916-d52b371",
+      "versao": "20261112T1128-d52b371",
       "n_horas": 288,
-      "MAE_realizado": 678.646165908423,
-      "MAE_naive_sazonal": 1451.6416666666667,
-      "MAE_referencia": 225.7097282585761,
+      "MAE_realizado": 678.4701242417564,
+      "MAE_naive_sazonal": 1451.873263888889,
+      "MAE_referencia": 227.24007507697485,
       "cobertura_80": 79.16666666666666,
       "psi": {
         "vento__wind_speed_100m": 0.302
@@ -34,15 +34,15 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.30)"
       ],
       "sinais": [
-        "degradação: MAE 679 MW = 3.01× a referência (226)"
+        "degradação: MAE 678 MW = 2.99× a referência (227)"
       ]
     },
     "solar": {
-      "versao": "20261112T0917-d52b371",
+      "versao": "20261112T1129-d52b371",
       "n_horas": 288,
-      "MAE_realizado": 142.1161130499499,
-      "MAE_naive_sazonal": 403.4680555555556,
-      "MAE_referencia": 121.75460746494726,
+      "MAE_realizado": 142.14302277217212,
+      "MAE_naive_sazonal": 403.4951388888889,
+      "MAE_referencia": 122.43157868871496,
       "cobertura_80": 69.44444444444444,
       "psi": {
         "sol__shortwave_radiation": 0.01,
