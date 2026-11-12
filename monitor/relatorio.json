@@ -1,13 +1,13 @@
 {
-  "gerado_em": "2026-11-12T09:02:00+00:00",
+  "gerado_em": "2026-11-12T11:06:04+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261112T0753-1f59234",
-      "n_horas": 240,
-      "MAE_realizado": 195.7223565219086,
-      "MAE_naive_sazonal": 360.83520833333336,
+      "versao": "20261112T0916-d52b371",
+      "n_horas": 288,
+      "MAE_realizado": 206.88624263279047,
+      "MAE_naive_sazonal": 383.4934027777778,
       "MAE_referencia": 128.8097924990579,
-      "cobertura_80": 70.83333333333334,
+      "cobertura_80": 58.333333333333336,
       "psi": {
         "populacao__temperature_2m": 0.188,
         "populacao__cloud_cover": 0.482,
@@ -17,16 +17,16 @@
         "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.48)"
       ],
       "sinais": [
-        "degradação: MAE 196 MW = 1.52× a referência (129)"
+        "degradação: MAE 207 MW = 1.61× a referência (129)"
       ]
     },
     "eolica": {
-      "versao": "20261112T0754-1f59234",
+      "versao": "20261112T0916-d52b371",
       "n_horas": 288,
-      "MAE_realizado": 681.280091235888,
-      "MAE_naive_sazonal": 1440.3213541666667,
+      "MAE_realizado": 678.646165908423,
+      "MAE_naive_sazonal": 1451.6416666666667,
       "MAE_referencia": 225.7097282585761,
-      "cobertura_80": 76.38888888888889,
+      "cobertura_80": 79.16666666666666,
       "psi": {
         "vento__wind_speed_100m": 0.302
       },
@@ -34,16 +34,16 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.30)"
       ],
       "sinais": [
-        "degradação: MAE 681 MW = 3.02× a referência (226)"
+        "degradação: MAE 679 MW = 3.01× a referência (226)"
       ]
     },
     "solar": {
-      "versao": "20261112T0754-1f59234",
+      "versao": "20261112T0917-d52b371",
       "n_horas": 288,
-      "MAE_realizado": 142.41337873428853,
-      "MAE_naive_sazonal": 403.36562499999997,
+      "MAE_realizado": 142.1161130499499,
+      "MAE_naive_sazonal": 403.4680555555556,
       "MAE_referencia": 121.75460746494726,
-      "cobertura_80": 59.72222222222222,
+      "cobertura_80": 69.44444444444444,
       "psi": {
         "sol__shortwave_radiation": 0.01,
         "sol__cloud_cover": 0.39,
@@ -58,10 +58,10 @@
   "alerta": true,
   "retreinar": true,
   "emissao": {
-    "ultima_origem": "2026-11-11",
-    "atraso_ultima_h": 6.9,
-    "atraso_mediano_h": 7.3,
-    "atraso_maximo_h": 7.6,
-    "origens": 2
+    "ultima_origem": "2026-11-12",
+    "atraso_ultima_h": 11.1,
+    "atraso_mediano_h": 7.6,
+    "atraso_maximo_h": 11.1,
+    "origens": 3
   }
 }
