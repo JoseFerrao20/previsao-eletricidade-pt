@@ -1,13 +1,13 @@
 {
-  "gerado_em": "2026-11-13T08:54:01+00:00",
+  "gerado_em": "2026-11-13T11:00:22+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261113T0721-54219eb",
+      "versao": "20261113T0915-54219eb",
       "n_horas": 288,
-      "MAE_realizado": 204.8974934168111,
-      "MAE_naive_sazonal": 402.37986111111115,
+      "MAE_realizado": 205.65394778942033,
+      "MAE_naive_sazonal": 401.8173611111112,
       "MAE_referencia": 131.44566927850786,
-      "cobertura_80": 69.16666666666667,
+      "cobertura_80": 68.33333333333333,
       "psi": {
         "populacao__temperature_2m": 0.202,
         "populacao__cloud_cover": 0.56,
@@ -17,14 +17,14 @@
         "meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.56)"
       ],
       "sinais": [
-        "degradação: MAE 205 MW = 1.56× a referência (131)"
+        "degradação: MAE 206 MW = 1.56× a referência (131)"
       ]
     },
     "eolica": {
-      "versao": "20261113T0721-54219eb",
+      "versao": "20261113T0915-54219eb",
       "n_horas": 288,
-      "MAE_realizado": 635.1629317850444,
-      "MAE_naive_sazonal": 1906.2399305555555,
+      "MAE_realizado": 634.7820290072667,
+      "MAE_naive_sazonal": 1907.875,
       "MAE_referencia": 227.24007507697485,
       "cobertura_80": 85.83333333333333,
       "psi": {
@@ -32,16 +32,16 @@
       },
       "avisos": [],
       "sinais": [
-        "degradação: MAE 635 MW = 2.80× a referência (227)"
+        "degradação: MAE 635 MW = 2.79× a referência (227)"
       ]
     },
     "solar": {
-      "versao": "20261113T0722-54219eb",
+      "versao": "20261113T0916-54219eb",
       "n_horas": 288,
-      "MAE_realizado": 148.01597582911154,
-      "MAE_naive_sazonal": 477.1020833333333,
+      "MAE_realizado": 149.0245377927138,
+      "MAE_naive_sazonal": 478.1246527777778,
       "MAE_referencia": 122.43157868871496,
-      "cobertura_80": 78.33333333333333,
+      "cobertura_80": 75.0,
       "psi": {
         "sol__shortwave_radiation": 0.011,
         "sol__cloud_cover": 0.322,
