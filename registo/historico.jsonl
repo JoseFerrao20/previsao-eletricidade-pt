@@ -64,3 +64,6 @@
 {"em": "2026-11-13T07:21:39+00:00", "alvo": "consumo", "versao": "20261113T0721-54219eb", "decisao": "promovido", "motivo": "MAE backtest 131 MW vs naive sazonal 222 MW"}
 {"em": "2026-11-13T07:21:56+00:00", "alvo": "eolica", "versao": "20261113T0721-54219eb", "decisao": "promovido", "motivo": "MAE backtest 227 MW vs naive sazonal 1241 MW"}
 {"em": "2026-11-13T07:22:23+00:00", "alvo": "solar", "versao": "20261113T0722-54219eb", "decisao": "promovido", "motivo": "MAE backtest 122 MW vs naive sazonal 211 MW"}
+{"em": "2026-11-13T09:15:31+00:00", "alvo": "consumo", "versao": "20261113T0915-54219eb", "decisao": "promovido", "motivo": "MAE backtest 131 MW vs naive sazonal 222 MW"}
+{"em": "2026-11-13T09:15:50+00:00", "alvo": "eolica", "versao": "20261113T0915-54219eb", "decisao": "promovido", "motivo": "MAE backtest 227 MW vs naive sazonal 1241 MW"}
+{"em": "2026-11-13T09:16:21+00:00", "alvo": "solar", "versao": "20261113T0916-54219eb", "decisao": "promovido", "motivo": "MAE backtest 122 MW vs naive sazonal 211 MW"}
