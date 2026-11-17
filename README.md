@@ -117,7 +117,7 @@ Backtest semana a semana: 52 semanas de teste, de 2025-11-17 a 2026-11-15; horiz
 | Alvo | Modelo | MAE (MW) | MAPE | sMAPE | Skill vs. naive sazonal |
 |------|--------|---------:|-----:|------:|------------------------:|
 | consumo | **LightGBM** | 185 | 2.9% | 2.9% | +47.8% |
-| consumo | Naive sazonal (7 dias) | 353 | 5.6% | 5.6% | +0.0% |
+| consumo | Naive sazonal (7 dias) | 354 | 5.6% | 5.6% | +0.0% |
 | consumo | Média da semana anterior | 466 | 7.6% | 7.5% | -31.9% |
 | consumo | Persistência (D-1) | 556 | 9.0% | 9.0% | -57.2% |
 | eolica | **LightGBM** | 262 | 31.2% | 25.3% | +76.6% |
@@ -191,9 +191,9 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Tipo de dia | feriado | 620 | 228 | 1273 | 814 (persist.) | +72% |
 | Tipo de dia | ponte | 144 | 240 | 1539 | 1264 (média sem.) | +81% |
 | Vento previsto a 100 m | < 4 m/s | 8 512 | 190 | 953 | 716 (persist.) | +73% |
-| Vento previsto a 100 m | 4–8 m/s | 6 984 | 317 | 1111 | 782 (média sem.) | +60% |
+| Vento previsto a 100 m | 4–8 m/s | 6 984 | 317 | 1110 | 782 (média sem.) | +60% |
 | Vento previsto a 100 m | 8–12 m/s | 1 519 | 389 | 1902 | 1553 (média sem.) | +75% |
-| Vento previsto a 100 m | ≥ 12 m/s | 441 | 354 | 1892 | 1295 (persist.) | +73% |
+| Vento previsto a 100 m | ≥ 12 m/s | 441 | 354 | 1893 | 1295 (persist.) | +73% |
 
 **solar**
 
@@ -470,7 +470,7 @@ Intervalo de previsão a 80 % (quantis 10 % e 90 %) nas mesmas 52 semanas, menos
 | consumo | D | LightGBM (quantis, sem calibrar) | 64.1% | 15.7% / 20.2% | 440 | 46 / 49 |
 | consumo | D | Naive ± erros passados | 83.4% | 8.3% / 8.3% | 1302 | 97 / 100 |
 | consumo | D | **LightGBM calibrado** | 78.2% | 10.8% / 11.0% | 604 | 45 / 45 |
-| consumo | D+1 | LightGBM (quantis, sem calibrar) | 61.0% | 17.7% / 21.2% | 464 | 53 / 56 |
+| consumo | D+1 | LightGBM (quantis, sem calibrar) | 61.0% | 17.7% / 21.3% | 464 | 53 / 56 |
 | consumo | D+1 | Naive ± erros passados | 83.8% | 8.2% / 7.9% | 1309 | 97 / 98 |
 | consumo | D+1 | **LightGBM calibrado** | 78.0% | 11.2% / 10.8% | 682 | 51 / 50 |
 | eolica | D | LightGBM (quantis, sem calibrar) | 82.2% | 9.5% / 8.3% | 993 | 55 / 70 |
