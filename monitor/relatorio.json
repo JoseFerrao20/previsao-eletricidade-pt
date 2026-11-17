@@ -1,13 +1,13 @@
 {
-  "gerado_em": "2026-11-17T11:52:16+00:00",
+  "gerado_em": "2026-11-17T14:59:02+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261117T1011-da1f5df",
+      "versao": "20261117T1213-da1f5df",
       "n_horas": 336,
-      "MAE_realizado": 150.25373955840192,
-      "MAE_naive_sazonal": 257.36398809523814,
-      "MAE_referencia": 142.72275616340787,
-      "cobertura_80": 78.52564102564102,
+      "MAE_realizado": 152.73275741554474,
+      "MAE_naive_sazonal": 260.159375,
+      "MAE_referencia": 142.72067283007453,
+      "cobertura_80": 77.56410256410257,
       "psi": {
         "populacao__temperature_2m": 0.598,
         "populacao__cloud_cover": 1.009,
@@ -20,11 +20,11 @@
       "sinais": []
     },
     "eolica": {
-      "versao": "20261117T1011-da1f5df",
+      "versao": "20261117T1213-da1f5df",
       "n_horas": 336,
-      "MAE_realizado": 462.5989154284277,
-      "MAE_naive_sazonal": 1526.9806547619046,
-      "MAE_referencia": 278.025863144389,
+      "MAE_realizado": 464.5325463808086,
+      "MAE_naive_sazonal": 1526.115476190476,
+      "MAE_referencia": 278.01568829319854,
       "cobertura_80": 71.47435897435898,
       "psi": {
         "vento__wind_speed_100m": 0.588
@@ -33,15 +33,15 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.59)"
       ],
       "sinais": [
-        "degradação: MAE 463 MW = 1.66× a referência (278)"
+        "degradação: MAE 465 MW = 1.67× a referência (278)"
       ]
     },
     "solar": {
-      "versao": "20261117T1011-da1f5df",
+      "versao": "20261117T1213-da1f5df",
       "n_horas": 336,
-      "MAE_realizado": 92.64535557103872,
-      "MAE_naive_sazonal": 343.52366071428577,
-      "MAE_referencia": 118.26199999933276,
+      "MAE_realizado": 92.95126296779864,
+      "MAE_naive_sazonal": 342.7066964285715,
+      "MAE_referencia": 118.26337648742798,
       "cobertura_80": 82.05128205128204,
       "psi": {
         "sol__shortwave_radiation": 0.098,
