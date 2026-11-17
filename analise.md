@@ -30,9 +30,9 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Tipo de dia | feriado | 620 | 228 | 1273 | 814 (persist.) | +72% |
 | Tipo de dia | ponte | 144 | 240 | 1539 | 1264 (média sem.) | +81% |
 | Vento previsto a 100 m | < 4 m/s | 8 512 | 190 | 953 | 716 (persist.) | +73% |
-| Vento previsto a 100 m | 4–8 m/s | 6 984 | 317 | 1111 | 782 (média sem.) | +60% |
+| Vento previsto a 100 m | 4–8 m/s | 6 984 | 317 | 1110 | 782 (média sem.) | +60% |
 | Vento previsto a 100 m | 8–12 m/s | 1 519 | 389 | 1902 | 1553 (média sem.) | +75% |
-| Vento previsto a 100 m | ≥ 12 m/s | 441 | 354 | 1892 | 1295 (persist.) | +73% |
+| Vento previsto a 100 m | ≥ 12 m/s | 441 | 354 | 1893 | 1295 (persist.) | +73% |
 
 **solar**
 
