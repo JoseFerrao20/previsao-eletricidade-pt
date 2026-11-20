@@ -1,26 +1,26 @@
-Relatório do monitor (2026-11-19T14:46:56+00:00)
+Relatório do monitor (2026-11-20T07:35:35+00:00)
 
-Emissão: a previsão de 2026-11-19 saiu 7.7 h depois da meia-noite; nas últimas 7 origens, mediana 7.0 h e máximo 8.2 h.
+Emissão: a previsão de 2026-11-20 saiu 7.6 h depois da meia-noite; nas últimas 7 origens, mediana 7.6 h e máximo 8.2 h.
 
-### ✅ consumo (modelo 20261119T1154-74f8ab7)
-- MAE realizado (7 dias): 136 MW · naive sazonal: 201 MW · referência do backtest: 143 MW
-- cobertura realizada do intervalo a 80 %: 70 %
+### ✅ consumo (modelo 20261119T1459-74f8ab7)
+- MAE realizado (7 dias): 134 MW · naive sazonal: 194 MW · referência do backtest: 143 MW
+- cobertura realizada do intervalo a 80 %: 68 %
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.76)
-- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 2.14)
-- aviso: meteorologia invulgar para a época: 'populacao__shortwave_radiation' (PSI 0.28)
+- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 1.36)
+- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 2.41)
+- aviso: meteorologia invulgar para a época: 'populacao__shortwave_radiation' (PSI 0.29)
 
-### ⚠️ eolica (modelo 20261119T1154-74f8ab7)
-- MAE realizado (7 dias): 401 MW · naive sazonal: 1503 MW · referência do backtest: 278 MW
-- cobertura realizada do intervalo a 80 %: 59 %
-- degradação: MAE 401 MW = 1.44× a referência (278)
-- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 1.17)
+### ⚠️ eolica (modelo 20261119T1459-74f8ab7)
+- MAE realizado (7 dias): 410 MW · naive sazonal: 1160 MW · referência do backtest: 278 MW
+- cobertura realizada do intervalo a 80 %: 53 %
+- degradação: MAE 410 MW = 1.47× a referência (278)
+- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 1.98)
 
-### ✅ solar (modelo 20261119T1154-74f8ab7)
-- MAE realizado (7 dias): 67 MW · naive sazonal: 169 MW · referência do backtest: 118 MW
-- cobertura realizada do intervalo a 80 %: 85 %
+### ✅ solar (modelo 20261119T1459-74f8ab7)
+- MAE realizado (7 dias): 71 MW · naive sazonal: 101 MW · referência do backtest: 118 MW
+- cobertura realizada do intervalo a 80 %: 84 %
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 1.62)
-- aviso: meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 0.64)
+- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 1.66)
+- aviso: meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 1.06)
 
 O retreino foi pedido automaticamente.
