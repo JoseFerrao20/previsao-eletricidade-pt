@@ -1,8 +1,8 @@
 {
-  "gerado_em": "2026-11-23T07:56:03+00:00",
+  "gerado_em": "2026-11-23T09:53:53+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261122T1356-74f8ab7",
+      "versao": "20261123T0816-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 136.41162450961997,
       "MAE_naive_sazonal": 242.66830357142854,
@@ -20,7 +20,7 @@
       "sinais": []
     },
     "eolica": {
-      "versao": "20261122T1356-74f8ab7",
+      "versao": "20261123T0816-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 411.93266147925783,
       "MAE_naive_sazonal": 1238.1657738095237,
@@ -37,7 +37,7 @@
       ]
     },
     "solar": {
-      "versao": "20261122T1356-74f8ab7",
+      "versao": "20261123T0817-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 75.87542479096575,
       "MAE_naive_sazonal": 128.4470238095238,
