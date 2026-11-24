@@ -1,4 +1,4 @@
-Relatório do monitor (2026-11-24T13:41:33+00:00)
+Relatório do monitor (2026-11-24T16:31:06+00:00)
 
 Emissão: a previsão de 2026-11-24 saiu 10.2 h depois da meia-noite; nas últimas 7 origens, mediana 7.7 h e máximo 10.2 h.
 
