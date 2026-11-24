@@ -1,12 +1,12 @@
 {
-  "gerado_em": "2026-11-24T10:14:32+00:00",
+  "gerado_em": "2026-11-24T11:45:23+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261123T1654-74f8ab7",
+      "versao": "20261124T1036-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 134.42929493631465,
       "MAE_naive_sazonal": 253.53437499999995,
-      "MAE_referencia": 143.07009619316977,
+      "MAE_referencia": 154.54131736817345,
       "cobertura_80": 60.416666666666664,
       "psi": {
         "populacao__temperature_2m": 0.48,
@@ -20,11 +20,11 @@
       "sinais": []
     },
     "eolica": {
-      "versao": "20261123T1655-74f8ab7",
+      "versao": "20261124T1036-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 396.36531041548926,
       "MAE_naive_sazonal": 1611.9808035714286,
-      "MAE_referencia": 278.190855476549,
+      "MAE_referencia": 316.79378546723393,
       "cobertura_80": 55.35714285714286,
       "psi": {
         "vento__wind_speed_100m": 0.447
@@ -32,16 +32,14 @@
       "avisos": [
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.45)"
       ],
-      "sinais": [
-        "degradação: MAE 396 MW = 1.42× a referência (278)"
-      ]
+      "sinais": []
     },
     "solar": {
-      "versao": "20261123T1655-74f8ab7",
+      "versao": "20261124T1037-74f8ab7",
       "n_horas": 336,
       "MAE_realizado": 80.18211872569934,
       "MAE_naive_sazonal": 143.82752976190474,
-      "MAE_referencia": 118.27018452314228,
+      "MAE_referencia": 102.31413331576596,
       "cobertura_80": 81.84523809523809,
       "psi": {
         "sol__shortwave_radiation": 0.063,
@@ -54,8 +52,8 @@
       "sinais": []
     }
   },
-  "alerta": true,
-  "retreinar": true,
+  "alerta": false,
+  "retreinar": false,
   "emissao": {
     "ultima_origem": "2026-11-24",
     "atraso_ultima_h": 10.2,
