@@ -1,25 +1,24 @@
-Relatório do monitor (2026-11-23T16:32:05+00:00)
+Relatório do monitor (2026-11-24T10:14:32+00:00)
 
-Emissão: a previsão de 2026-11-23 saiu 7.9 h depois da meia-noite; nas últimas 7 origens, mediana 7.7 h e máximo 8.2 h.
+Emissão: a previsão de 2026-11-24 saiu 10.2 h depois da meia-noite; nas últimas 7 origens, mediana 7.7 h e máximo 10.2 h.
 
-### ✅ consumo (modelo 20261123T1258-74f8ab7)
-- MAE realizado (7 dias): 137 MW · naive sazonal: 245 MW · referência do backtest: 143 MW
-- cobertura realizada do intervalo a 80 %: 58 %
+### ✅ consumo (modelo 20261123T1654-74f8ab7)
+- MAE realizado (7 dias): 134 MW · naive sazonal: 254 MW · referência do backtest: 143 MW
+- cobertura realizada do intervalo a 80 %: 60 %
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.57)
-- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.82)
+- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.48)
+- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.77)
 
-### ⚠️ eolica (modelo 20261123T1258-74f8ab7)
-- MAE realizado (7 dias): 412 MW · naive sazonal: 1239 MW · referência do backtest: 278 MW
-- cobertura realizada do intervalo a 80 %: 54 %
-- degradação: MAE 412 MW = 1.48× a referência (278)
-- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.51)
+### ⚠️ eolica (modelo 20261123T1655-74f8ab7)
+- MAE realizado (7 dias): 396 MW · naive sazonal: 1612 MW · referência do backtest: 278 MW
+- cobertura realizada do intervalo a 80 %: 55 %
+- degradação: MAE 396 MW = 1.42× a referência (278)
+- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.45)
 
-### ✅ solar (modelo 20261123T1259-74f8ab7)
-- MAE realizado (7 dias): 77 MW · naive sazonal: 127 MW · referência do backtest: 118 MW
-- cobertura realizada do intervalo a 80 %: 80 %
+### ✅ solar (modelo 20261123T1655-74f8ab7)
+- MAE realizado (7 dias): 80 MW · naive sazonal: 144 MW · referência do backtest: 118 MW
+- cobertura realizada do intervalo a 80 %: 82 %
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.59)
-- aviso: meteorologia invulgar para a época: 'sol__temperature_2m' (PSI 0.28)
+- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.48)
 
 O retreino foi pedido automaticamente.
