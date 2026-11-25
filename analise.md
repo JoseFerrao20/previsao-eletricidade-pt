@@ -24,7 +24,7 @@ MAE (MW) por segmento nas mesmas 52 semanas, horizontes D e D+1 agregados. *Melh
 | Estação | inverno | 4 320 | 345 | 1500 | 1092 (média sem.) | +68% |
 | Estação | primavera | 4 400 | 274 | 1135 | 853 (média sem.) | +68% |
 | Estação | verão | 4 416 | 199 | 690 | 557 (média sem.) | +64% |
-| Estação | outono | 4 320 | 241 | 1109 | 876 (média sem.) | +72% |
+| Estação | outono | 4 320 | 242 | 1109 | 876 (média sem.) | +72% |
 | Tipo de dia | dia útil | 11 896 | 257 | 1111 | 840 (média sem.) | +69% |
 | Tipo de dia | fim de semana | 4 796 | 288 | 1059 | 840 (média sem.) | +66% |
 | Tipo de dia | feriado | 620 | 228 | 1273 | 814 (persist.) | +72% |
