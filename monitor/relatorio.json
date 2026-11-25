@@ -1,11 +1,11 @@
 {
-  "gerado_em": "2026-11-25T10:38:10+00:00",
+  "gerado_em": "2026-11-25T12:50:08+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261125T0913-8c71007",
+      "versao": "20261125T1058-0573709",
       "n_horas": 336,
-      "MAE_realizado": 137.25044351111788,
-      "MAE_naive_sazonal": 267.6778273809523,
+      "MAE_realizado": 137.6294613682607,
+      "MAE_naive_sazonal": 267.88571428571424,
       "MAE_referencia": 154.44751156460202,
       "cobertura_80": 61.30952380952381,
       "psi": {
@@ -20,12 +20,12 @@
       "sinais": []
     },
     "eolica": {
-      "versao": "20261125T0914-8c71007",
+      "versao": "20261125T1059-0573709",
       "n_horas": 336,
-      "MAE_realizado": 459.8458181135062,
-      "MAE_naive_sazonal": 1660.1964285714287,
+      "MAE_realizado": 457.36263358969666,
+      "MAE_naive_sazonal": 1660.8200892857144,
       "MAE_referencia": 316.9602475208053,
-      "cobertura_80": 52.083333333333336,
+      "cobertura_80": 52.67857142857143,
       "psi": {
         "vento__wind_speed_100m": 0.339
       },
@@ -33,16 +33,16 @@
         "meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.34)"
       ],
       "sinais": [
-        "degradação: MAE 460 MW = 1.45× a referência (317)"
+        "degradação: MAE 457 MW = 1.44× a referência (317)"
       ]
     },
     "solar": {
-      "versao": "20261125T0914-8c71007",
+      "versao": "20261125T1059-0573709",
       "n_horas": 336,
-      "MAE_realizado": 86.6949790175212,
-      "MAE_naive_sazonal": 143.2449404761905,
+      "MAE_realizado": 86.0841159222831,
+      "MAE_naive_sazonal": 142.63020833333334,
       "MAE_referencia": 102.2884430589723,
-      "cobertura_80": 80.95238095238095,
+      "cobertura_80": 81.25,
       "psi": {
         "sol__shortwave_radiation": 0.042,
         "sol__cloud_cover": 0.405,
