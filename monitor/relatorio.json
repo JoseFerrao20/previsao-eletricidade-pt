@@ -1,13 +1,13 @@
 {
-  "gerado_em": "2026-11-27T10:15:58+00:00",
+  "gerado_em": "2026-11-27T12:17:09+00:00",
   "alvos": {
     "consumo": {
-      "versao": "20261127T0907-0573709",
+      "versao": "20261127T1031-0573709",
       "n_horas": 336,
-      "MAE_realizado": 125.56945747250232,
-      "MAE_naive_sazonal": 278.4092261904761,
+      "MAE_realizado": 125.55336150622514,
+      "MAE_naive_sazonal": 278.69062499999995,
       "MAE_referencia": 154.44751156460202,
-      "cobertura_80": 67.26190476190477,
+      "cobertura_80": 66.66666666666666,
       "psi": {
         "populacao__temperature_2m": 0.171,
         "populacao__cloud_cover": 0.463,
@@ -19,10 +19,10 @@
       "sinais": []
     },
     "eolica": {
-      "versao": "20261127T0907-0573709",
+      "versao": "20261127T1031-0573709",
       "n_horas": 336,
-      "MAE_realizado": 428.5036027890958,
-      "MAE_naive_sazonal": 1966.5989583333333,
+      "MAE_realizado": 428.5690789795719,
+      "MAE_naive_sazonal": 1966.5819940476192,
       "MAE_referencia": 316.9602475208053,
       "cobertura_80": 66.07142857142857,
       "psi": {
@@ -34,12 +34,12 @@
       ]
     },
     "solar": {
-      "versao": "20261127T0908-0573709",
+      "versao": "20261127T1031-0573709",
       "n_horas": 336,
-      "MAE_realizado": 89.13835698066184,
-      "MAE_naive_sazonal": 184.15982142857143,
+      "MAE_realizado": 88.85324691891792,
+      "MAE_naive_sazonal": 183.9485119047619,
       "MAE_referencia": 102.2884430589723,
-      "cobertura_80": 80.65476190476191,
+      "cobertura_80": 80.95238095238095,
       "psi": {
         "sol__shortwave_radiation": 0.056,
         "sol__cloud_cover": 0.29,
