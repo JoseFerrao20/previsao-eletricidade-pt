@@ -1,24 +1,22 @@
-Relatório do monitor (2026-11-26T15:50:20+00:00)
+Relatório do monitor (2026-11-27T08:52:37+00:00)
 
-Emissão: a previsão de 2026-11-26 saiu 8.7 h depois da meia-noite; nas últimas 7 origens, mediana 7.9 h e máximo 10.2 h.
+Emissão: a previsão de 2026-11-27 saiu 8.9 h depois da meia-noite; nas últimas 7 origens, mediana 8.7 h e máximo 10.2 h.
 
-### ✅ consumo (modelo 20261126T1251-0573709)
-- MAE realizado (7 dias): 127 MW · naive sazonal: 243 MW · referência do backtest: 154 MW
+### ✅ consumo (modelo 20261126T1609-0573709)
+- MAE realizado (7 dias): 126 MW · naive sazonal: 278 MW · referência do backtest: 154 MW
+- cobertura realizada do intervalo a 80 %: 67 %
+- sem sinais de degradação
+- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.46)
+
+### ⚠️ eolica (modelo 20261126T1610-0573709)
+- MAE realizado (7 dias): 428 MW · naive sazonal: 1967 MW · referência do backtest: 317 MW
 - cobertura realizada do intervalo a 80 %: 66 %
-- sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'populacao__temperature_2m' (PSI 0.25)
-- aviso: meteorologia invulgar para a época: 'populacao__cloud_cover' (PSI 0.65)
+- degradação: MAE 428 MW = 1.35× a referência (317)
 
-### ⚠️ eolica (modelo 20261126T1252-0573709)
-- MAE realizado (7 dias): 447 MW · naive sazonal: 1649 MW · referência do backtest: 317 MW
-- cobertura realizada do intervalo a 80 %: 60 %
-- degradação: MAE 447 MW = 1.41× a referência (317)
-- aviso: meteorologia invulgar para a época: 'vento__wind_speed_100m' (PSI 0.26)
-
-### ✅ solar (modelo 20261126T1252-0573709)
-- MAE realizado (7 dias): 88 MW · naive sazonal: 160 MW · referência do backtest: 102 MW
-- cobertura realizada do intervalo a 80 %: 82 %
+### ✅ solar (modelo 20261126T1610-0573709)
+- MAE realizado (7 dias): 90 MW · naive sazonal: 185 MW · referência do backtest: 102 MW
+- cobertura realizada do intervalo a 80 %: 79 %
 - sem sinais de degradação
-- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.33)
+- aviso: meteorologia invulgar para a época: 'sol__cloud_cover' (PSI 0.29)
 
 O retreino foi pedido automaticamente.
